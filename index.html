@@ -186,7 +186,6 @@
             }
         };
 
-        // === FUNGSI UPDATE DROPDOWN DINAMIS ===
         function updateDropdowns(prefix) {
             const val = document.getElementById(prefix + 'KatBranding').value;
             const katOutlet = document.getElementById(prefix + 'KatOutlet');
@@ -195,9 +194,4 @@
 
             katOutlet.innerHTML = '<option value="">-- Pilih --</option>';
             jenisOutlet.innerHTML = '<option value="">-- Pilih --</option>';
-            pabrikan.innerHTML = '<option value="">-- Pilih --</option>';
-            
-            document.getElementById(prefix + 'AyoSrcGroup').classList.add('hidden');
-            document.getElementById(prefix + 'AyoSrc').value = '';
-
-            if (val === 'Retail Branding') {
+            pabrikan.
