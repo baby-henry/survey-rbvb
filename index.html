@@ -15,11 +15,13 @@
         .btn-blue { background: #1976d2; color: white; }
         .btn-green { background: #388e3c; color: white; }
         .btn-outline { background: transparent; border: 2px solid #1976d2; color: #1976d2; }
+        .btn-search { background: #424242; color: white; }
         .outlet-item { border-left: 4px solid #1976d2; padding: 10px; background: #f9f9f9; margin-bottom: 10px; cursor: pointer; border-radius: 4px; }
         .outlet-item h4 { margin: 0 0 5px 0; color: #1976d2; }
         .outlet-item p { margin: 2px 0; font-size: 0.85rem; color: #555; }
         .hidden { display: none; }
-        #loading { text-align: center; font-weight: bold; color: #666; margin: 20px 0; }
+        #loading { text-align: center; font-weight: bold; color: #666; margin: 20px 0; display: none; }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
@@ -30,20 +32,47 @@
     <div id="mainDashboard">
         <div class="card">
             <h3>Filter Data</h3>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label>Area</label>
+                    <select id="fArea" onchange="populateDso('fArea', 'fDso', 'fZona', 'fSektor')">
+                        <option value="ALL">ALL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>DSO/Sub</label>
+                    <select id="fDso" onchange="populateZona('fArea', 'fDso', 'fZona', 'fSektor')">
+                        <option value="ALL">ALL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Zona</label>
+                    <select id="fZona" onchange="populateSektor('fArea', 'fDso', 'fZona', 'fSektor')">
+                        <option value="ALL">ALL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sektor</label>
+                    <select id="fSektor">
+                        <option value="ALL">ALL</option>
+                    </select>
+                </div>
+            </div>
             <div class="form-group">
                 <label>Status</label>
-                <select id="filterStatus" onchange="loadData()">
+                <select id="filterStatus">
                     <option value="Not Complete">Not Complete</option>
                     <option value="Complete">Complete</option>
                 </select>
             </div>
+            <button class="btn btn-search" onclick="loadData()">Cari / Load Data</button>
             <button class="btn btn-blue" onclick="showAddForm()">+ Add New Outlet</button>
         </div>
 
         <div class="card">
             <h3>List Outlet</h3>
             <div id="loading">Memuat data dari Supabase...</div>
-            <div id="listContainer"></div>
+            <div id="listContainer"><p style="text-align:center;">Gunakan filter di atas dan klik Cari Data.</p></div>
         </div>
     </div>
 
@@ -54,8 +83,14 @@
             <div class="form-group"><label>Outlet ID</label><input type="text" id="addId"></div>
             <div class="form-group"><label>Nama Outlet</label><input type="text" id="addNama"></div>
             <div class="form-group"><label>Alamat</label><input type="text" id="addAlamat"></div>
-            <div class="form-group"><label>Zona</label><input type="text" id="addZona"></div>
-            <div class="form-group"><label>Sektor</label><input type="text" id="addSektor"></div>
+            
+            <hr> <!-- Menggunakan Dropdown Berjenjang yang Sama -->
+            <div class="form-group"><label>Area</label><select id="aArea" onchange="populateDso('aArea', 'aDso', 'aZona', 'aSektor')"><option value="">-- Pilih --</option></select></div>
+            <div class="form-group"><label>DSO/Sub</label><select id="aDso" onchange="populateZona('aArea', 'aDso', 'aZona', 'aSektor')"><option value="">-- Pilih --</option></select></div>
+            <div class="form-group"><label>Zona</label><select id="aZona" onchange="populateSektor('aArea', 'aDso', 'aZona', 'aSektor')"><option value="">-- Pilih --</option></select></div>
+            <div class="form-group"><label>Sektor</label><select id="aSektor"><option value="">-- Pilih --</option></select></div>
+            <hr>
+
             <div class="form-group">
                 <label>Kategori Branding</label>
                 <select id="addKatBranding">
@@ -114,35 +149,673 @@
             'Prefer': 'return=representation'
         };
 
+        // === MASTER DATA LOKASI (Dari File Excel) ===
+        const masterLokasi = {
+            "Brawijaya": {
+                "DSO Bojonegoro": {
+                    "Balen": ["Balen", "Sukosewu"],
+                    "Baureno": ["Baureno", "Kepoh Baru"],
+                    "Bojonegoro": ["Bojonegoro Kota", "Dander", "Kapas", "Trucuk"],
+                    "Kalitidu": ["Kalitidu", "Malo"],
+                    "Kedungadem": ["Kedungadem", "Sugihwaras"],
+                    "Ngasem": ["Gayam", "Ngambon", "Ngasem", "Purwosari"],
+                    "Ngraho": ["Margomulyo", "Ngraho", "Tambakrejo"],
+                    "Padangan": ["Kasiman", "Kedewan", "Padangan"],
+                    "Sumberejo": ["Kanor", "Sumberejo"],
+                    "Temayang": ["Bubulan", "Gondang", "Sekar", "Temayang"]
+                },
+                "DSO Jombang": {
+                    "Berbek": ["Berbek", "Ngetos"],
+                    "Gudo": ["Bandar Kedung Mulyo", "Gudo", "Megaluh"],
+                    "Jogoroto": ["Jogoroto", "Mojowarno"],
+                    "Jombang": ["Diwek", "Jombang Kota", "Perak", "Peterongan", "Tembelang"],
+                    "Kertosono": ["Baron", "Kertosono"],
+                    "Kudu": ["Kesamben", "Kudu", "Ngusikan"],
+                    "Mojoagung": ["Mojoagung", "Sumobito"],
+                    "Nganjuk": ["Bagor", "Loceret", "Nganjuk Kota", "Sukomoro"],
+                    "Ngoro": ["Bareng", "Ngoro", "Wonosalam"],
+                    "Pace": ["Pace", "Prambon"],
+                    "Patianrowo": ["Jatikalen", "Lengkong", "Patianrowo"],
+                    "Ploso": ["Kabuh", "Plandaan", "Ploso"],
+                    "Rejoso": ["Gondang", "Ngluyu", "Rejoso"],
+                    "Sawahan": ["Sawahan", "Wilangan"],
+                    "Tanjunganom": ["Ngronggot", "Tanjunganom"]
+                },
+                "DSO Madiun": {
+                    "Balerejo": ["Balerejo", "Madiun"],
+                    "Barat": ["Barat", "Karangrejo", "Karas", "Kartoharjo"],
+                    "Caruban": ["Mejayan", "Wonoasri"],
+                    "Dolopo": ["Dagangan", "Dolopo", "Geger", "Kebonsari"],
+                    "Geneng": ["Geneng", "Gerih", "Kwadungan"],
+                    "Jiwan": ["Jiwan", "Sawahan"],
+                    "Jogorogo": ["Jogorogo", "Kendal", "Ngrambe"],
+                    "Karangjati": ["Bringin", "Karangjati", "Padas", "Pangkur"],
+                    "Kare": ["Gemarang", "Kare", "Wungu"],
+                    "Kawedanan": ["Bendo", "Kawedanan", "Nguntoronadi", "Takeran"],
+                    "Kedunggalar": ["Kedunggalar", "Pitu"],
+                    "Madiun Kota": ["Kartoharjo", "Mangu Harjo", "Taman"],
+                    "Magetan": ["Magetan Kota", "Ngariboyo", "Sidorejo"],
+                    "Mantingan": ["Mantingan", "Sine"],
+                    "Maospati": ["Maospati", "Sukomoro"],
+                    "Ngawi": ["Kasreman", "Ngawi Kota", "Paron"],
+                    "Parang": ["Lembeyan", "Parang", "Poncol"],
+                    "Plaosan": ["Panekan", "Plaosan"],
+                    "Saradan": ["Pilangkenceng", "Saradan"],
+                    "Widodaren": ["Karanganyar", "Widodaren"]
+                },
+                "DSO Tulungagung": {
+                    "Bandung": ["Bandung", "Besuki", "Tanggung Gunung"],
+                    "Campur Darat": ["Campur Darat", "Pakel"],
+                    "Dongko": ["Dongko", "Panggul"],
+                    "Gandusari": ["Gandusari", "Watulimo"],
+                    "Kalidawir": ["Kalidawir", "Pucang Laban", "Rejotangan"],
+                    "Kampak": ["Kampak", "Munjungan"],
+                    "Kauman": ["Gondang", "Kauman", "Pager Wojo"],
+                    "Ngantru": ["Karang Rejo", "Ngantru", "Sendang"],
+                    "Ngunut": ["Ngunut Kota", "Sumber Gempol"],
+                    "Pogalan": ["Durenan", "Pogalan"],
+                    "Trenggalek": ["Bendungan", "Karangan", "Trenggalek Kota"],
+                    "Tugu": ["Pule", "Suruh", "Tugu"],
+                    "Tulungagung": ["Boyolangu", "Kedung Waru", "Tulungagung Kota"]
+                },
+                "Sub DSO Blitar": {
+                    "Blitar Kota": ["Kepanjenkidul", "Sananwetan", "Sukorejo"],
+                    "Kademangan": ["Bakung", "Kademangan", "Wonotirto"],
+                    "Kanigoro": ["Garum", "Kanigoro", "Talun"],
+                    "Kesamben": ["Doko", "Kesamben", "Selorejo"],
+                    "Panggungrejo": ["Binangun", "Panggungrejo", "Wates"],
+                    "Ponggok": ["Nglegok", "Ponggok", "Sanankulon"],
+                    "Srengat": ["Srengat", "Udanawu", "Wonodadi"],
+                    "Sutojayan": ["Selopuro", "Sutojayan"],
+                    "Wlingi": ["Gandusari", "Wlingi"]
+                },
+                "Sub DSO Kediri": {
+                    "Banyakan": ["Banyakan", "Gampengrejo", "Ngasem"],
+                    "Grogol": ["Grogol", "Tarokan"],
+                    "Kandat": ["Kandat", "Ringinrejo"],
+                    "Kediri Kota": ["Kota Kediri", "Mojoroto", "Pesantren"],
+                    "Kepung": ["Badas", "Kandangan", "Kepung", "Puncu"],
+                    "Mojo": ["Kras", "Mojo"],
+                    "Ngadiluwih": ["Ngadiluwih", "Semen"],
+                    "Papar": ["Kunjang", "Papar", "Purwoasri"],
+                    "Pare": ["Gurah", "Pare"],
+                    "Plemahan": ["Kayen Kidul", "Pagu", "Plemahan"],
+                    "Wates": ["Ngancar", "Plosoklaten", "Wates"]
+                },
+                "Sub DSO Ponorogo": {
+                    "Badegan": ["Badegan", "Jambon", "Sampung"],
+                    "Balong": ["Balong", "Bungkal"],
+                    "Jenangan": ["Jenangan", "Ngebel"],
+                    "Jetis": ["Jetis", "Sambit", "Sawoo"],
+                    "Kauman": ["Kauman", "Sukorejo"],
+                    "Nawangan": ["Bandar", "Nawangan", "Tegalombo"],
+                    "Ngadirojo": ["Ngadirojo", "Sudimoro", "Tulakan"],
+                    "Pacitan": ["Arjosari", "Kebonagung", "Pacitan Kota"],
+                    "Ponorogo": ["Babadan", "Ponorogo Kota", "Siman"],
+                    "Pulung": ["Mlarak", "Pudak", "Pulung", "Sooko"],
+                    "Punung": ["Donorojo", "Pringkuku", "Punung"],
+                    "Slahung": ["Ngrayun", "Slahung"]
+                },
+                "Sub DSO Tuban": {
+                    "Bangilan": ["Bangilan", "Senori"],
+                    "Jatirogo": ["Jatirogo", "Kenduruan"],
+                    "Kerek": ["Kerek", "Montong"],
+                    "Plumpang": ["Plumpang", "Widang"],
+                    "Rengel": ["Grabagan", "Rengel", "Soko"],
+                    "Singgahan": ["Parengan", "Singgahan"],
+                    "Tambakboyo": ["Bancar", "Tambakboyo"],
+                    "Tuban": ["Jenu", "Merakurak", "Palang", "Semanding", "Tuban Kota"]
+                }
+            },
+            "Maesa Jaya": {
+                "DSO Gorontalo": {
+                    "Boliyohuto": ["Boliyohuto", "Wonosari"],
+                    "Bone Bolango": ["Bone Pantai", "Suwawa", "Tapa"],
+                    "Gorontalo Kota": ["Kota Barat", "Kota Selatan", "Kota Timur", "Kota Utara"],
+                    "Kwandang": ["Atinggola", "Kwandang", "Sumalata"],
+                    "Limboto": ["Batudaa", "Bongomeme", "Limboto", "Telaga"]
+                },
+                "DSO Jayapura": {
+                    "Abepura": ["Abepura", "Waena"],
+                    "Biak": ["Biak Kabupaten", "Biak Kota", "Supiori"],
+                    "Jayapura Kota": ["Entrop", "Jayapura"],
+                    "Keerom": ["Arso", "Koya", "Senggi"],
+                    "Sentani": ["Bonggo", "Burmeso", "Nimbo", "Oksibil", "Sarmi", "Sentani"],
+                    "Serui": ["Serui Kabupaten", "Serui Kota", "Waropen"],
+                    "Wamena": ["Hubikosi", "Lanny Jaya", "Nduga", "Tolikara", "Wouma", "Yahukimo", "Yalimo"]
+                },
+                "DSO Manado": {
+                    "Bitung": ["Bitung Barat", "Bitung Tengah", "Bitung Timur"],
+                    "Manado Kota": ["Bunaken", "Manado Selatan", "Manado Tengah", "Manado Utara"],
+                    "Minahasa Utara": ["Airmadidi", "Likupang"],
+                    "Sangihe": ["Sangihe", "Talaud"],
+                    "Siau": ["Siau", "Tagulandang"],
+                    "Tomohon": ["Pineleng", "Tomohon Barat", "Tomohon Kota"]
+                },
+                "DSO Palu": {
+                    "Ampana": ["Ampana", "Ampana Kepulauan", "Bunta"],
+                    "Banggai Kepulauan": ["Banggai", "Salakan"],
+                    "Donggala": ["Banawa", "Banawa Selatan"],
+                    "Luwuk Kota": ["Luwuk"],
+                    "Luwuk Pesisir": ["Bualemo", "Masama", "Pagimana"],
+                    "Palu Kota": ["Palu Barat", "Palu Selatan", "Palu Timur"],
+                    "Palu Pesisir": ["Buluri", "Palu Utara"],
+                    "Pantai Barat": ["Labuan", "Sojol"],
+                    "Parigi Raya": ["Ampibabo", "Kotaraya", "Parigi", "Tinombo", "Toboli", "Tolai"],
+                    "Pasangkayu": ["Baras", "Pasangkayu Kota", "Sarjo", "Tikke"],
+                    "Sigi": ["Biromaru", "Kulawi", "Marawola", "Palolo"],
+                    "Toili": ["Batui", "Kintom", "Toili"]
+                },
+                "Sub DSO Amurang": {
+                    "Amurang": ["Amurang Kota", "Tompaso Baru"],
+                    "Kawangkoan": ["Kawangkoan", "Langowan", "Tondano"],
+                    "Ratahan": ["Ratahan", "Tombatu"]
+                },
+                "Sub DSO Kotamobagu": {
+                    "Bolmong": ["Mopuya", "Poigar"],
+                    "Bolmut": ["Kaidipang", "Lolak"],
+                    "Bolsel": ["Kotabunan", "Molibagu"],
+                    "Kotamobagu": ["Kotamobagu", "Passi"]
+                },
+                "Sub DSO Manokwari": {
+                    "Manokwari Kota": ["Manokwari Kota"],
+                    "Manokwari Pesisir": ["Anggi", "Bintuni", "Manokwari Kabupaten", "Prafi", "Rasinki", "Wasior"],
+                    "Nabire Kota": ["Nabire Kota"],
+                    "Nabire Pesisir": ["Deiyai", "Dogiyai", "Enarotali", "Nabire Kabupaten"]
+                },
+                "Sub DSO Marisa": {
+                    "Boalemo": ["Paguyaman", "Tilamuta"],
+                    "Moutong": ["Moutong", "Popayato"],
+                    "Pohuwato": ["Marisa", "Paguat", "Randangan"]
+                },
+                "Sub DSO Merauke": {
+                    "Merauke Kota": ["Merauke"],
+                    "Merauke Pesisir": ["Agats", "Keppi", "Kimaam", "Kurik", "Semangga"],
+                    "Tanah Merah": ["Asiki", "Tanah Merah"]
+                },
+                "Sub DSO Morowali": {
+                    "Morowali": ["Bahodopi", "Bungku Kota", "Menui Kepulauan", "Ungkaya"],
+                    "Morowali Utara": ["Betheleme", "Kolonedale"],
+                    "Poso": ["Pendolo", "Poso Kota", "Tambarana", "Tentena", "Uekuli"]
+                },
+                "Sub DSO Sofifi": {
+                    "Jailolo": ["Ibu", "Jailolo Selatan"],
+                    "Morotai": ["Daruba", "Sopi"],
+                    "Sofifi": ["Gane", "Oba", "Patani", "Weda"],
+                    "Subaim": ["Buli", "Maba", "Subaim"],
+                    "Tobelo": ["Galela", "Kao", "Tobelo"]
+                },
+                "Sub DSO Sorong": {
+                    "Fakfak": ["Fakfak Kabupaten", "Fakfak Kota", "Kaimana"],
+                    "Sorong Kota": ["Sorong Barat", "Sorong Pusat", "Sorong Timur"],
+                    "Sorong Pesisir": ["Aimas", "Maybrat", "Salawati", "Tambrauw", "Teminabuan", "Waisai"],
+                    "Timika": ["Mimika", "Sugapa", "Tembagapura", "Timika Kota"]
+                },
+                "Sub DSO Ternate": {
+                    "Bacan": ["Kasiruta", "Kayoa", "Obi"],
+                    "Sanana": ["Sanana", "Taliabu"],
+                    "Ternate": ["Ternate Barat", "Ternate Kota"],
+                    "Tidore": ["Tidore Kota", "Tidore Utara"]
+                },
+                "Sub DSO Tolitoli": {
+                    "Buol": ["Bokat", "Buol", "Lakea", "Momunu", "Palele"],
+                    "Tolitoli Kota": ["Galang", "Tolitoli Kota"],
+                    "Tolitoli Utara": ["Basi Dondo", "Damsol", "Lampasio", "Tolitoli Utara"]
+                }
+            },
+            "Mahameru": {
+                "DSO Banyuwangi": {
+                    "Banyuwangi Kota": ["Banyuwangi", "Giri", "Glagah", "Kalipuro"],
+                    "Gambiran": ["Gambiran", "Purwoharjo", "Tegalsari"],
+                    "Genteng": ["Genteng", "Glenmore", "Kalibaru", "Sempu"],
+                    "Muncar": ["Muncar", "Tegaldlimo"],
+                    "Rogojampi": ["Blimbingsari", "Kabat", "Rogojampi", "Songgon"],
+                    "Sanggar": ["Bangorejo", "Pesanggaran", "Siliragung"],
+                    "Srono": ["Cluring", "Singojuruh", "Srono"],
+                    "Wongsorejo": ["Licin", "Wongsorejo"]
+                },
+                "DSO Jember": {
+                    "Ambulu": ["Ajung", "Ambulu", "Jenggawah", "Tempurejo", "Wuluhan"],
+                    "Bondowoso Kota": ["Bondowoso", "Tegalampel", "Tenggarang"],
+                    "Jember Kota": ["Arjasa", "Kaliwates", "Pakusari", "Patrang", "Rambipuji", "Sukorambi", "Sumbersari"],
+                    "Kalisat": ["Jelbuk", "Kalisat", "Sukowono", "Sumber Jambe"],
+                    "Kencong": ["Balung", "Gumuk Mas", "Jombang", "Kencong", "Puger", "Umbulsari"],
+                    "Silo": ["Ledokombo", "Mayang", "Mumbulsari", "Silo"],
+                    "Tamanan": ["Grujugan", "Jambesari Darus Sholah", "Maesan", "Pujer", "Tamanan", "Tlogosari"],
+                    "Tanggul": ["Bangsalsari", "Panti", "Semboro", "Sumber Baru", "Tanggul"],
+                    "Wonosari": ["Ijen", "Sukosari", "Sumber Wringin", "Taman Krocok", "Wonosari"],
+                    "Wringin": ["Binakal", "Curah Dami", "Pakem", "Wringin"]
+                },
+                "DSO Malang": {
+                    "Batu Kota": ["Batu", "Bumiaji", "Junrejo"],
+                    "Karangploso": ["Dau", "Karangploso", "Wagir"],
+                    "Malang Kota": ["Blimbing", "Kedungkandang", "Klojen", "Lowokwaru", "Sukun"],
+                    "Pujon": ["Kasembon", "Ngantang", "Pujon"],
+                    "Singosari": ["Lawang", "Pakis", "Singosari"],
+                    "Tumpang": ["Jabung", "Poncokusumo", "Tumpang"]
+                },
+                "DSO Probolinggo": {
+                    "Banyuanyar": ["Banyuanyar", "Gending", "Tegal Siwalan", "Tiris"],
+                    "Kraksaan": ["Kraksaan", "Krejengan", "Pajarakan"],
+                    "Maron": ["Gading", "Krucil", "Maron"],
+                    "Paiton": ["Besuk", "Kota Anyar", "Paiton", "Pakuniran"],
+                    "Probolinggo Kota": ["Kademangan", "Kanigaran", "Kedopok", "Mayangan", "Wonoasih"],
+                    "Sukapura": ["Kuripan", "Lumbang", "Sukapura", "Sumber", "Wonomerto"],
+                    "Tongas": ["Bantaran", "Dringu", "Leces", "Sumberasih", "Tongas"]
+                },
+                "Sub DSO Kepanjen": {
+                    "Dampit": ["Ampel Gading", "Dampit", "Tirto Yudo"],
+                    "Gondanglegi": ["Bantur", "Gondanglegi", "Pagelaran"],
+                    "Kepanjen": ["Kepanjen", "Kromengan", "Ngajum", "Pakisaji", "Wonosari"],
+                    "Sumber Pucung": ["Donomulyo", "Kalipare", "Pagak", "Sumber Pucung"],
+                    "Turen": ["Gedangan", "Sumbermanjing Wetan", "Turen"],
+                    "Wajak": ["Bululawang", "Tajinan", "Wajak"]
+                },
+                "Sub DSO Lumajang": {
+                    "Klakah": ["Jatiroto", "Kedungjajang", "Klakah", "Randuagung", "Ranuyoso"],
+                    "Lumajang Kota": ["Lumajang", "Rowokangkung", "Sukodono", "Sumbersuko", "Tekung"],
+                    "Pasirian": ["Candipuro", "Pasirian", "Pronojiwo", "Tempursari"],
+                    "Senduro": ["Gucialit", "Padang", "Pasrujambe", "Senduro"],
+                    "Yosowilangun": ["Kunir", "Tempeh", "Yosowilangun"]
+                },
+                "Sub DSO Pasuruan": {
+                    "Bangil": ["Bangil", "Beji", "Gempol", "Rembang"],
+                    "Kraton": ["Kraton", "Pohjentrek", "Rejoso"],
+                    "Nguling": ["Grati", "Lekok", "Lumbang", "Nguling", "Winongan"],
+                    "Pandaan": ["Pandaan", "Prigen", "Sukorejo"],
+                    "Pasrepan": ["Gondang Wetan", "Kejayan", "Pasrepan", "Puspo", "Tosari"],
+                    "Pasuruan Kota": ["Bugulkidul", "Gadingrejo", "Panggungrejo", "Purworejo"],
+                    "Purwosari": ["Purwodadi", "Purwosari", "Tutur", "Wonorejo"]
+                },
+                "Sub DSO Situbondo": {
+                    "Asembagus": ["Arjasa", "Asembagus", "Banyuputih", "Jangkar", "Kapongan"],
+                    "Besuki": ["Banyuglugur", "Besuki", "Bungatan", "Jatibanteng", "Mlandingan", "Suboh", "Sumbermalang"],
+                    "Prajekan": ["Botolinggo", "Cermee", "Klabang", "Prajekan", "Tapen"],
+                    "Situbondo Kota": ["Kendit", "Mangaran", "Panarukan", "Panji", "Situbondo"]
+                }
+            },
+            "Mulawarman": {
+                "DSO Banjarmasin": {
+                    "Banjar": ["Aranio", "Martapura", "Pengaron"],
+                    "Banjar Baru": ["Banjar Baru Kota", "Gambut", "Landasan Ulin"],
+                    "Banjarmasin Kota": ["Banjarmasin Barat", "Banjarmasin Selatan", "Banjarmasin Tengah", "Banjarmasin Tenggara", "Banjarmasin Timur", "Banjarmasin Utara"],
+                    "Barito Kuala": ["Anjir", "Mandastana", "Marabahan"],
+                    "Kuala Kapuas": ["Kapuas Hilir", "Kapuas Kota"],
+                    "Tanah Laut": ["Bati Bati", "Jorong", "Pelaihari"]
+                },
+                "DSO Palangkaraya": {
+                    "Katingan": ["Kasongan", "Tumbang Jutuh", "Tumbang Samba"],
+                    "Kuala Kurun": ["Bukit Rawi", "Kuala Kurun", "Tewah"],
+                    "Palangkaraya Kota": ["Bukit Batu", "Jekan Raya", "Pahandut"],
+                    "Pulang Pisau": ["Pandih Batu", "Pulang Pisau", "Sebangau"]
+                },
+                "DSO Samarinda": {
+                    "Kota Bangun": ["Kembang Janggut", "Kota Bangun"],
+                    "Melak": ["Melak"],
+                    "Samarinda Kota": ["Samarinda Ilir", "Samarinda Ulu", "Samarinda Utara"],
+                    "Samarinda Seberang": ["Loa Janan", "Samarinda Seberang"],
+                    "Tanjung Redeb": ["Derawan", "Segah", "Talisayan", "Tanjung Redeb"],
+                    "Tanjung Selor": ["Kayan", "Lumbis", "Malinau", "Tana Tidung", "Tanjung Palas", "Tanjung Selor"],
+                    "Tarakan": ["Nunukan", "Tarakan Barat", "Tarakan Timur"],
+                    "Tenggarong": ["Loa Kulu", "Tenggarong Kota"],
+                    "Tenggarong Seberang": ["Muara Bengkal", "Sebulu", "Tenggarong Seberang"]
+                },
+                "Sub DSO Balikpapan": {
+                    "Balikpapan Kota": ["Balikpapan Barat", "Balikpapan Selatan", "Balikpapan Tengah", "Balikpapan Timur", "Balikpapan Utara"],
+                    "Balikpapan Rural": ["Handil", "Sepaku"]
+                },
+                "Sub DSO Barabai": {
+                    "Amuntai": ["Babirik", "Jumba"],
+                    "Balangan": ["Batu Mandi", "Paringin"],
+                    "Barabai": ["Barabai Kota", "Batang Alai", "Haruyan"],
+                    "Kandangan": ["Kandangan", "Negara", "Patung"],
+                    "Tabalong": ["Kelua", "Muara Uya", "Tanjung"],
+                    "Tapin": ["Binuang", "Rantau"]
+                },
+                "Sub DSO Batulicin": {
+                    "Pulau Laut": ["Kalumpang", "Kota Baru"],
+                    "Tanah Bumbu": ["Batulicin", "Pagatan", "Satui"]
+                },
+                "Sub DSO Muara Teweh": {
+                    "Barito": ["Ampah", "Tamiyang"],
+                    "Kapuas": ["Buntok", "Pujon"],
+                    "Muara Teweh": ["Kandui", "Puruk Cahu", "Teweh"]
+                },
+                "Sub DSO Pangkalan Bun": {
+                    "Lamandau": ["Bulik Timur", "Nangabulik"],
+                    "Pangkalan Lada": ["Pangkalan Lada", "Seruyan"],
+                    "Pangkalanbun Kota": ["Arut Selatan", "Kumai"],
+                    "Sukamara": ["Balai Riam", "Sukamara"]
+                },
+                "Sub DSO Sangatta": {
+                    "Bontang": ["Bontang Kota", "Muara Badak"],
+                    "Sangatta": ["Bengalon", "Sangatta Kota", "Sangkulirang", "Wahau"]
+                },
+                "Sub DSO Sampit": {
+                    "Parenggean": ["Cempaga", "Kota Besi", "Parenggean", "Sangai"],
+                    "Sampit": ["Baamang", "Ketapang", "Kuala Pembuang", "Samuda"],
+                    "Telawang": ["Kuayan", "Pembuang Hulu", "Telawang"]
+                },
+                "Sub DSO Tanah Grogot": {
+                    "Penajam": ["Babulu", "Penajam"],
+                    "Tanah Grogot": ["Batu Kajang", "Long Ikis", "Tanah Grogot", "Tanjung Harapan"]
+                }
+            },
+            "Nusa Seribu": {
+                "DSO Ambon": {
+                    "Ambon Kepulauan": ["Banda Neira", "Saparua"],
+                    "Ambon Rural": ["Leihitu", "Salahutu"],
+                    "Ambon Urban": ["Baguala", "Nusaniwe", "Sirimau", "Teluk Ambon"],
+                    "Bula": ["Bula", "Bula Kepulauan"],
+                    "Masohi": ["Masohi", "Tehoru", "Wahai", "Waipia"],
+                    "Namlea": ["Namlea Selatan", "Namlea Utara"],
+                    "Namrole": ["Namrole Barat", "Namrole Timur"],
+                    "Piru": ["Kairatu", "Piru"],
+                    "Saumlaki Kepulauan": ["Moa", "Saumlaki"],
+                    "Tual Kepulauan": ["Dobo", "Tual"]
+                },
+                "DSO Denpasar": {
+                    "Denpasar Rural": ["Denpasar Utara", "Mambal", "Mengwi"],
+                    "Denpasar Urban": ["Denpasar Barat", "Denpasar Selatan", "Denpasar Timur"],
+                    "Kuta": ["Kerobokan", "Kuta", "Nusa Dua"]
+                },
+                "DSO Kupang": {
+                    "Alor": ["Kalabahi", "Pantar", "Wetar-Kisar"],
+                    "Atambua": ["Atambua", "Haikesak", "Halilulik"],
+                    "Betun": ["Besikama", "Betun"],
+                    "Kefamenanu": ["Kefamenanu", "Maubesi", "Wini"],
+                    "Kupang Rural": ["Amfoang", "Baun", "Fatuleu", "Oelamasi", "Taebenu"],
+                    "Kupang Urban": ["Alak", "Kelapa Lima", "Kota Raja", "Maulafa", "Oebobo"],
+                    "Rote": ["Baa-Rote", "Seba-Sabu"],
+                    "Soe": ["Kolbano", "Niki-Niki", "Soe"],
+                    "Waikabubak": ["Anakalang", "Kodi", "Tambolaka", "Waikabubak"],
+                    "Waingapu": ["Lewa", "Melolo", "Waingapu"]
+                },
+                "DSO Mataram": {
+                    "Aikmel": ["Aikmel", "Pringgabaya"],
+                    "Gerung": ["Gerung", "Lembar"],
+                    "Masbagik": ["Masbagik", "Suralaga", "Terara"],
+                    "Mataram Rural": ["Gunung Sari", "Narmada"],
+                    "Mataram Urban": ["Ampenan", "Cakranegara", "Mataram"],
+                    "Praya": ["Batukliang", "Jonggat", "Kopang", "Praya", "Pujut"],
+                    "Selong": ["Keruak", "Sakra", "Selong"],
+                    "Tanjung": ["Bayan", "Tanjung"]
+                },
+                "Sub DSO Klungkung": {
+                    "Bangli": ["Bangli", "Kintamani"],
+                    "Gianyar": ["Gianyar", "Sukawati"],
+                    "Karangasem": ["Bebandem", "Karangasem"],
+                    "Klungkung": ["Klungkung", "Nusa Penida"],
+                    "Kubu": ["Kubu", "Rendang"],
+                    "Ubud": ["Payangan", "Ubud"]
+                },
+                "Sub DSO Maumere": {
+                    "Bajawa": ["Bajawa", "Mbay"],
+                    "Ende": ["Ende", "Maurole", "Wolowaru"],
+                    "Larantuka": ["Adonara", "Larantuka", "Lembata"],
+                    "Maumere": ["Geliting", "Maumere", "Nita"]
+                },
+                "Sub DSO Ruteng": {
+                    "Borong": ["Borong", "Kota Komba"],
+                    "Labuan Bajo": ["Labuan Bajo Rural", "Labuan Bajo Urban"],
+                    "Lembor": ["Lembor", "Mbeliling"],
+                    "Ruteng": ["Iteng", "Reok", "Ruteng"]
+                },
+                "Sub DSO Singaraja": {
+                    "Baturiti": ["Baturiti", "Kerambitan", "Pupuan"],
+                    "Negara": ["Jembrana", "Negara"],
+                    "Pekutatan": ["Melaya", "Pekutatan"],
+                    "Sawan": ["Banjar", "Sawan", "Tejakula"],
+                    "Singaraja": ["Buleleng", "Seririt"],
+                    "Tabanan": ["Kediri", "Tabanan"]
+                },
+                "Sub DSO Sumbawa Besar": {
+                    "Bima Rural": ["Mada Pangga", "Monta", "Sape", "Woha"],
+                    "Bima Urban": ["Bima", "Raba"],
+                    "Dompu": ["Dompu", "Manggalewa", "Pekat"],
+                    "Empang": ["Empang", "Lape"],
+                    "Sumbawa Besar": ["Labuhan Badas", "Lunyuk", "Moyo", "Sumbawa"],
+                    "Taliwang": ["Alas", "Taliwang Rural", "Taliwang Urban"]
+                }
+            },
+            "Phinisi": {
+                "DSO Kendari": {
+                    "Kendari": ["Anduonohu", "Baruga", "Kota Lama", "Mandonga"],
+                    "Konawe Rural": ["Morosi", "Sampara"],
+                    "Konawe Selatan Rural": ["Landono", "Motaha"],
+                    "Konawe Selatan Urban": ["Andoolo", "Lainea", "Tinanggea"],
+                    "Konawe Tenggara": ["Moramo", "Wawonii"],
+                    "Konawe Urban": ["Lambuya", "Unaaha"],
+                    "Konawe Utara": ["Asera", "Langgikima", "Lasolo"]
+                },
+                "DSO Makassar": {
+                    "Gowa": ["Bajeng", "Somba Opu"],
+                    "Gowa Rural": ["Malakaji", "Malino"],
+                    "Jeneponto": ["Jeneponto", "Taman Roya"],
+                    "Makassar Barat": ["Mamajang", "Mariso", "Tamalate"],
+                    "Makassar Selatan": ["Manggala", "Panakkukang", "Rappocini"],
+                    "Makassar Timur": ["Biringkanaya", "Tamalanrea"],
+                    "Makassar Utara": ["Bontoala", "Makassar", "Tallo", "Ujung Pandang", "Ujung Tanah", "Wajo"],
+                    "Maros": ["Batangase", "Camba", "Maros"],
+                    "Pangkep": ["Bungoro", "Pangkep", "Segeri"],
+                    "Takalar": ["Galesong", "Takalar"]
+                },
+                "DSO Palopo": {
+                    "Belopa": ["Belopa", "Larompong", "Padang Sappa"],
+                    "Malili": ["Malili", "Sorowako"],
+                    "Mangkutana": ["Mangkutana", "Wotu"],
+                    "Masamba": ["Malengke", "Masamba"],
+                    "Palopo": ["Palopo Selatan", "Palopo Utara"],
+                    "Sabbang": ["Lamasi", "Sabbang"],
+                    "Sukamaju": ["Bone Bone", "Sukamaju"]
+                },
+                "DSO Parepare": {
+                    "Barru": ["Barru", "Palanro", "Pekkae"],
+                    "Parepare": ["Bacukiki", "Soreang", "Ujung"],
+                    "Pinrang": ["Langnga", "Pekkabata", "Pinrang"],
+                    "Polewali Rural": ["Campalagian", "Wonomulyo"],
+                    "Polewali Urban": ["Polewali Kota"],
+                    "Sidrap": ["Rappang", "Sidrap", "Tanrutedong"]
+                },
+                "DSO Watampone": {
+                    "Bone Selatan": ["Bengo", "Lapri", "Mare", "Pallatae"],
+                    "Bone Urban": ["Bone Kota"],
+                    "Bone Utara": ["Lamurukung", "Uloe"],
+                    "Sengkang": ["Attapange", "Sengkang"],
+                    "Soppeng": ["Cabenge", "Soppeng"]
+                },
+                "Sub DSO Baubau": {
+                    "Baubau Kota": ["Baubau Kota Barat", "Baubau Kota Timur"],
+                    "Buton Kota": ["Lasalimu", "Pasar Wajo"],
+                    "Buton Selatan": ["Batauga", "Busel Kepulauan", "Sampolawa"],
+                    "Buton Tengah": ["Kabaena", "Lombe", "Mawasangka"],
+                    "Buton Utara": ["Ereke", "Maligano"],
+                    "Muna": ["Raha Kota", "Raha Rural", "Wakuru"],
+                    "Muna Barat": ["Kambara", "Tiworo"],
+                    "Wakatobi": ["Tobi", "Waka"]
+                },
+                "Sub DSO Bulukumba": {
+                    "Bantaeng": ["Bantaeng"],
+                    "Bulukumba": ["Bulukumba", "Kajang", "Tanete"],
+                    "Selayar": ["Selayar"],
+                    "Sinjai": ["Bikeru", "Sinjai"]
+                },
+                "Sub DSO Kolaka": {
+                    "Bombana": ["Bambaea", "Boepinang", "Rumbia"],
+                    "Kolaka Rural": ["Pomalaa", "Tanggetada"],
+                    "Kolaka Timur": ["Ladongi", "Rate-Rate"],
+                    "Kolaka Urban": ["Kolaka", "Samaturu"],
+                    "Kolaka Utara": ["Lasusua", "Pakue", "Ranteangin"]
+                },
+                "Sub DSO Mamuju": {
+                    "Majene": ["Majene", "Malunda", "Sendana"],
+                    "Mamasa": ["Mamasa", "Mambi", "Sumarorong"],
+                    "Mamuju Rural": ["Tarailu", "Tasiu"],
+                    "Mamuju Tengah": ["Karossa", "Topoyo"],
+                    "Mamuju Urban": ["Mamuju Kota", "Tapalang"]
+                },
+                "Sub DSO Toraja": {
+                    "Enrekang": ["Baraka", "Enrekang", "Sudu"],
+                    "Makale": ["Makale", "Sanggalla"],
+                    "Rantepao": ["Rantepao", "Sa'dan", "Sanggalangi"],
+                    "Rantetayo": ["Rantetayo", "Rembon"]
+                }
+            },
+            "Surabaya Raya": {
+                "DSO Pamekasan": {
+                    "Bangkalan Selatan": ["Bangkalan", "Blega", "Burneh", "Galis - Bangkalan", "Kamal", "Kwanyar", "Labang", "Modung", "Socah", "Tanah Merah", "Tragah"],
+                    "Bangkalan Utara": ["Arosbaya", "Geger", "Klampis", "Kokop", "Konang", "Sepulu", "Tanjung Bumi"],
+                    "Pamekasan Selatan": ["Galis - Pamekasan", "Kadur", "Larangan", "Pademawu", "Palengaan", "Pamekasan", "Proppo", "Tlanakan"],
+                    "Pamekasan Utara": ["Batu Marmar", "Pakong", "Pasean", "Pegantenan", "Waru - Pamekasan"],
+                    "Sampang Selatan": ["Camplong", "Jrengik", "Omben", "Pangarengan", "Sampang", "Sreseh", "Torjun"],
+                    "Sampang Utara": ["Banyuates", "Karang Penang", "Kedungdung", "Ketapang", "Robatal", "Sokobanah", "Tambelangan"],
+                    "Sumenep Selatan": ["Arjasa", "Batuan", "Bluto", "Ganding", "Gayam", "Giligenteng", "Guluk Guluk", "Kalianget", "Kangayan", "Kota Sumenep", "Lenteng", "Masalembu", "Nonggunong", "Pragaan", "Raas", "Sapeken", "Saronggi", "Talango"],
+                    "Sumenep Utara": ["Ambunten", "Batang Batang", "Batuputih", "Dasuk", "Dungkek", "Gapura", "Manding", "Pasongsongan", "Rubaru"]
+                },
+                "DSO Sidoarjo": {
+                    "Sidoarjo Barat": ["Balong Bendo", "Krian", "Prambon", "Tarik", "Wonoayu"],
+                    "Sidoarjo Kota": ["Buduran", "Candi", "Sidoarjo"],
+                    "Sidoarjo Selatan": ["Jabon", "Krembung", "Porong", "Tanggulangin", "Tulangan"],
+                    "Sidoarjo Utara": ["Gedangan", "Sedati", "Sukodono", "Taman"]
+                },
+                "DSO Surabaya Barat": {
+                    "Bawean": ["Sangkapura", "Tambak"],
+                    "Bubutan": ["Bubutan", "Genteng", "Krembangan", "Pabean Cantian"],
+                    "Gresik Selatan": ["Balongpanggang", "Benjeng", "Cerme", "Driyorejo", "Duduksampeyan", "Kedamean", "Menganti", "Wringinanom"],
+                    "Gresik Utara": ["Bungah", "Dukun", "Gresik", "Kebomas", "Manyar", "Panceng", "Sidayu", "Ujungpangkah"],
+                    "Karangpilang": ["Karangpilang", "Lakarsantri", "Sambikerep", "Wiyung"],
+                    "Sawahan": ["Dukuh Pakis", "Sawahan", "Sukomanunggal", "Tegalsari"],
+                    "Tandes": ["Asemrowo", "Benowo", "Pakal", "Tandes"]
+                },
+                "DSO Surabaya Timur": {
+                    "Kenjeran": ["Bulak", "Kenjeran", "Semampir", "Simokerto"],
+                    "Rungkut": ["Gunung Anyar", "Rungkut", "Waru"],
+                    "Sukolilo": ["Gubeng", "Mulyorejo", "Sukolilo", "Tambaksari"],
+                    "Wonokromo": ["Gayungan", "Jambangan", "Tenggilis Mejoyo", "Wonocolo", "Wonokromo"]
+                },
+                "Sub DSO Lamongan": {
+                    "Lamongan Barat": ["Babat", "Kedungpring", "Pucuk", "Sekaran", "Sugio", "Sukodadi"],
+                    "Lamongan Selatan": ["Bluluk", "Mantup", "Modo", "Ngimbang", "Sambeng", "Sukorame"],
+                    "Lamongan Timur": ["Deket", "Glagah", "Kembangbahu", "Lamongan", "Sarirejo", "Tikung", "Turi"],
+                    "Lamongan Utara": ["Brondong", "Kalitengah", "Karang Geneng", "Karangbinangun", "Laren", "Maduran", "Paciran", "Solokuro"]
+                },
+                "Sub DSO Mojokerto": {
+                    "Mojokerto Barat": ["Bangsal", "Dlanggu", "Jatirejo", "Kutorejo", "Puri", "Trowulan"],
+                    "Mojokerto Kota": ["Kranggan", "Magersari", "Mojoanyar", "Prajurit Kulon", "Sooko"],
+                    "Mojokerto Timur": ["Gondang", "Mojosari", "Ngoro", "Pacet", "Pungging", "Trawas"],
+                    "Mojokerto Utara": ["Dawar Blandong", "Gedek", "Jetis", "Kemlagi"]
+                }
+            }
+        };
+
+        // INISIALISASI DROPDOWN SAAT HALAMAN DIBUKA
+        window.onload = function() {
+            populateArea('fArea'); // Untuk Dashboard Filter
+            populateArea('aArea'); // Untuk Form Add New
+        };
+
+        function populateArea(areaId) {
+            const areaSelect = document.getElementById(areaId);
+            const isFilter = areaId === 'fArea';
+            areaSelect.innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+            
+            for (let area in masterLokasi) {
+                areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
+            }
+        }
+
+        function populateDso(areaId, dsoId, zonaId, sektorId) {
+            const area = document.getElementById(areaId).value;
+            const dsoSelect = document.getElementById(dsoId);
+            const isFilter = areaId === 'fArea';
+            
+            dsoSelect.innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+            document.getElementById(zonaId).innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+            document.getElementById(sektorId).innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+
+            if (area !== "ALL" && area !== "") {
+                const dsos = masterLokasi[area];
+                for (let dso in dsos) {
+                    dsoSelect.innerHTML += `<option value="${dso}">${dso}</option>`;
+                }
+            }
+        }
+
+        function populateZona(areaId, dsoId, zonaId, sektorId) {
+            const area = document.getElementById(areaId).value;
+            const dso = document.getElementById(dsoId).value;
+            const zonaSelect = document.getElementById(zonaId);
+            const isFilter = areaId === 'fArea';
+            
+            zonaSelect.innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+            document.getElementById(sektorId).innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+
+            if (dso !== "ALL" && dso !== "") {
+                const zonas = masterLokasi[area][dso];
+                for (let zona in zonas) {
+                    zonaSelect.innerHTML += `<option value="${zona}">${zona}</option>`;
+                }
+            }
+        }
+
+        function populateSektor(areaId, dsoId, zonaId, sektorId) {
+            const area = document.getElementById(areaId).value;
+            const dso = document.getElementById(dsoId).value;
+            const zona = document.getElementById(zonaId).value;
+            const sektorSelect = document.getElementById(sektorId);
+            const isFilter = areaId === 'fArea';
+            
+            sektorSelect.innerHTML = isFilter ? '<option value="ALL">ALL</option>' : '<option value="">-- Pilih --</option>';
+
+            if (zona !== "ALL" && zona !== "") {
+                const sektors = masterLokasi[area][dso][zona];
+                sektors.forEach(sektor => {
+                    sektorSelect.innerHTML += `<option value="${sektor}">${sektor}</option>`;
+                });
+            }
+        }
+
         let currentData = [];
         let selectedOutletId = null;
 
-        // FETCH DATA
+        // FETCH DATA (DENGAN FILTER BERJENJANG)
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('listContainer').innerHTML = '';
+            
             const status = document.getElementById('filterStatus').value;
+            const area = document.getElementById('fArea').value;
+            const dso = document.getElementById('fDso').value;
+            const zona = document.getElementById('fZona').value;
+            const sektor = document.getElementById('fSektor').value;
+
+            // Merakit URL Query berdasarkan filter yang dipilih
+            let url = `${SUPABASE_URL}?status=eq.${status}`;
+            if(area !== 'ALL') url += `&area=eq.${encodeURIComponent(area)}`;
+            if(dso !== 'ALL') url += `&dso_sub=eq.${encodeURIComponent(dso)}`;
+            if(zona !== 'ALL') url += `&zona=eq.${encodeURIComponent(zona)}`;
+            if(sektor !== 'ALL') url += `&sektor=eq.${encodeURIComponent(sektor)}`;
+            url += `&select=*&limit=100`; // Batasi 100 data agar tidak berat jika filter di-ALL-kan
 
             try {
-                const response = await fetch(`${SUPABASE_URL}?status=eq.${status}&select=*`, { headers: HEADERS });
-                if(!response.ok) throw new Error("Gagal load database. Cek API Key & URL.");
+                const response = await fetch(url, { headers: HEADERS });
+                if(!response.ok) throw new Error("Gagal load database.");
                 
                 currentData = await response.json();
                 renderList();
             } catch (error) {
                 alert(error.message);
-            } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
-        // RENDER LIST
         function renderList() {
             const container = document.getElementById('listContainer');
             container.innerHTML = '';
+            document.getElementById('loading').style.display = 'none';
 
             if(currentData.length === 0) {
-                container.innerHTML = '<p style="text-align:center;">Tidak ada data.</p>';
+                container.innerHTML = '<p style="text-align:center;">Tidak ada data yang cocok dengan filter.</p>';
                 return;
             }
 
@@ -152,6 +825,7 @@
                 div.innerHTML = `
                     <h4>${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
                     <p>${item.alamat || '-'}</p>
+                    <p style="font-size:0.75rem; color:#888;">Area: ${item.area||'-'} | DSO: ${item.dso_sub||'-'}</p>
                     <p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>
                 `;
                 div.onclick = () => showValidasi(item);
@@ -161,6 +835,15 @@
 
         // ADD NEW (INSERT)
         async function submitAddNew() {
+            const area = document.getElementById('aArea').value;
+            const dso = document.getElementById('aDso').value;
+            const zona = document.getElementById('aZona').value;
+            
+            if(!area || !dso || !zona) {
+                alert("Harap pilih Area, DSO, dan Zona!");
+                return;
+            }
+
             const btn = event.target;
             btn.innerHTML = "Menyimpan...";
             
@@ -168,10 +851,12 @@
                 outlet_id: document.getElementById('addId').value,
                 nama_outlet: document.getElementById('addNama').value,
                 alamat: document.getElementById('addAlamat').value,
-                zona: document.getElementById('addZona').value,
-                sektor: document.getElementById('addSektor').value,
+                area: area,
+                dso_sub: dso,
+                zona: zona,
+                sektor: document.getElementById('aSektor').value,
                 kategori_branding: document.getElementById('addKatBranding').value,
-                status: 'Complete' // Otomatis Complete
+                status: 'Complete'
             };
 
             try {
@@ -183,7 +868,7 @@
                 
                 if(res.ok) {
                     alert('Data berhasil ditambahkan!');
-                    document.querySelectorAll('input').forEach(i => i.value = ''); // reset form
+                    document.querySelectorAll('input').forEach(i => i.value = ''); 
                     backToDashboard();
                     loadData();
                 } else {
@@ -195,7 +880,6 @@
             btn.innerHTML = "SUBMIT COMPLETE";
         }
 
-        // TAMPILKAN FORM VALIDASI
         function showValidasi(item) {
             selectedOutletId = item.outlet_id;
             document.getElementById('mainDashboard').classList.add('hidden');
@@ -207,11 +891,11 @@
             document.getElementById('infoOutlet').innerHTML = `
                 <p><strong>Outlet ID:</strong> ${item.outlet_id}</p>
                 <p><strong>Nama:</strong> ${item.nama_outlet}</p>
+                <p><strong>Lokasi:</strong> ${item.area} - ${item.zona}</p>
                 <p><strong>Branding Saat Ini:</strong> ${item.kategori_branding}</p>
             `;
         }
 
-        // LOGIKA YA/TIDAK
         function toggleEdit() {
             const val = document.getElementById('valSesuai').value;
             const editArea = document.getElementById('editArea');
@@ -229,7 +913,6 @@
             }
         }
 
-        // UPDATE DATA (VALIDASI COMPLETE)
         async function submitValidasi() {
             const btn = event.target;
             btn.innerHTML = "Mengupdate...";
@@ -262,7 +945,6 @@
             btn.innerHTML = "COMPLETE";
         }
 
-        // NAVIGASI UI
         function showAddForm() {
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('addForm').classList.remove('hidden');
@@ -273,8 +955,6 @@
             document.getElementById('validasiForm').classList.add('hidden');
             document.getElementById('mainDashboard').classList.remove('hidden');
         }
-
-        window.onload = loadData;
     </script>
 </body>
 </html>
