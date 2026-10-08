@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail & Venue Branding Survey</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f9; }
+        .header { background: #d32f2f; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2rem; border-radius: 8px 8px 0 0; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; color: #333; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 0.95rem; }
+        .btn { width: 100%; padding: 12px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 1rem; }
+        .btn-blue { background: #1976d2; color: white; }
+        .btn-green { background: #388e3c; color: white; }
+        .btn-outline { background: transparent; border: 2px solid #1976d2; color: #1976d2; }
+        .outlet-item { border-left: 4px solid #1976d2; padding: 10px; background: #f9f9f9; margin-bottom: 10px; cursor: pointer; border-radius: 4px; }
+        .outlet-item h4 { margin: 0 0 5px 0; color: #1976d2; }
+        .outlet-item p { margin: 2px 0; font-size: 0.85rem; color: #555; }
+        .hidden { display: none; }
+        #loading { text-align: center; font-weight: bold; color: #666; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="header">Survey_RBVB</div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="mainDashboard">
+        <div class="card">
+            <h3>Filter Data</h3>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filterStatus" onchange="loadData()">
+                    <option value="Not Complete">Not Complete</option>
+                    <option value="Complete">Complete</option>
+                </select>
+            </div>
+            <button class="btn btn-blue" onclick="showAddForm()">+ Add New Outlet</button>
+        </div>
+
+        <div class="card">
+            <h3>List Outlet</h3>
+            <div id="loading">Memuat data dari Supabase...</div>
+            <div id="listContainer"></div>
+        </div>
+    </div>
+
+    <!-- FORM ADD NEW -->
+    <div id="addForm" class="hidden">
+        <div class="card">
+            <h3>Add New Outlet</h3>
+            <div class="form-group"><label>Outlet ID</label><input type="text" id="addId"></div>
+            <div class="form-group"><label>Nama Outlet</label><input type="text" id="addNama"></div>
+            <div class="form-group"><label>Alamat</label><input type="text" id="addAlamat"></div>
+            <div class="form-group"><label>Zona</label><input type="text" id="addZona"></div>
+            <div class="form-group"><label>Sektor</label><input type="text" id="addSektor"></div>
+            <div class="form-group">
+                <label>Kategori Branding</label>
+                <select id="addKatBranding">
+                    <option value="Retail Branding">Retail Branding</option>
+                    <option value="Venue Branding">Venue Branding</option>
+                </select>
+            </div>
+            <button class="btn btn-green" onclick="submitAddNew()">SUBMIT COMPLETE</button>
+            <button class="btn btn-outline" onclick="backToDashboard()">Batal</button>
+        </div>
+    </div>
+
+    <!-- FORM VALIDASI (KLIK DARI LIST) -->
+    <div id="validasiForm" class="hidden">
+        <div class="card">
+            <h3>Validasi Outlet</h3>
+            <div id="infoOutlet"></div>
+            <hr>
+            <div class="form-group">
+                <label>Apakah branding masih sesuai?</label>
+                <select id="valSesuai" onchange="toggleEdit()">
+                    <option value="">-- Pilih --</option>
+                    <option value="YA">YA</option>
+                    <option value="TIDAK">TIDAK</option>
+                </select>
+            </div>
+            
+            <div id="editArea" class="hidden">
+                <div class="form-group">
+                    <label>Kategori Branding (Update)</label>
+                    <select id="editKatBranding">
+                        <option value="Retail Branding">Retail Branding</option>
+                        <option value="Venue Branding">Venue Branding</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pabrikan</label>
+                    <input type="text" id="editPabrikan" placeholder="Contoh: SRC, PMI, GG">
+                </div>
+            </div>
+
+            <button class="btn btn-green hidden" id="btnCompleteVal" onclick="submitValidasi()">COMPLETE</button>
+            <button class="btn btn-outline" onclick="backToDashboard()">Kembali</button>
+        </div>
+    </div>
+
+    <script>
+        // === KONFIGURASI SUPABASE ===
+        const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb';
+        const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
+        
+        const HEADERS = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        };
+
+        let currentData = [];
+        let selectedOutletId = null;
+
+        // FETCH DATA
+        async function loadData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('listContainer').innerHTML = '';
+            const status = document.getElementById('filterStatus').value;
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}?status=eq.${status}&select=*`, { headers: HEADERS });
+                if(!response.ok) throw new Error("Gagal load database. Cek API Key & URL.");
+                
+                currentData = await response.json();
+                renderList();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // RENDER LIST
+        function renderList() {
+            const container = document.getElementById('listContainer');
+            container.innerHTML = '';
+
+            if(currentData.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">Tidak ada data.</p>';
+                return;
+            }
+
+            currentData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'outlet-item';
+                div.innerHTML = `
+                    <h4>${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
+                    <p>${item.alamat || '-'}</p>
+                    <p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>
+                `;
+                div.onclick = () => showValidasi(item);
+                container.appendChild(div);
+            });
+        }
+
+        // ADD NEW (INSERT)
+        async function submitAddNew() {
+            const btn = event.target;
+            btn.innerHTML = "Menyimpan...";
+            
+            const payload = {
+                outlet_id: document.getElementById('addId').value,
+                nama_outlet: document.getElementById('addNama').value,
+                alamat: document.getElementById('addAlamat').value,
+                zona: document.getElementById('addZona').value,
+                sektor: document.getElementById('addSektor').value,
+                kategori_branding: document.getElementById('addKatBranding').value,
+                status: 'Complete' // Otomatis Complete
+            };
+
+            try {
+                const res = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: HEADERS,
+                    body: JSON.stringify(payload)
+                });
+                
+                if(res.ok) {
+                    alert('Data berhasil ditambahkan!');
+                    document.querySelectorAll('input').forEach(i => i.value = ''); // reset form
+                    backToDashboard();
+                    loadData();
+                } else {
+                    alert('Gagal menyimpan data.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            btn.innerHTML = "SUBMIT COMPLETE";
+        }
+
+        // TAMPILKAN FORM VALIDASI
+        function showValidasi(item) {
+            selectedOutletId = item.outlet_id;
+            document.getElementById('mainDashboard').classList.add('hidden');
+            document.getElementById('validasiForm').classList.remove('hidden');
+            document.getElementById('valSesuai').value = "";
+            document.getElementById('editArea').classList.add('hidden');
+            document.getElementById('btnCompleteVal').classList.add('hidden');
+
+            document.getElementById('infoOutlet').innerHTML = `
+                <p><strong>Outlet ID:</strong> ${item.outlet_id}</p>
+                <p><strong>Nama:</strong> ${item.nama_outlet}</p>
+                <p><strong>Branding Saat Ini:</strong> ${item.kategori_branding}</p>
+            `;
+        }
+
+        // LOGIKA YA/TIDAK
+        function toggleEdit() {
+            const val = document.getElementById('valSesuai').value;
+            const editArea = document.getElementById('editArea');
+            const btn = document.getElementById('btnCompleteVal');
+
+            if (val === 'TIDAK') {
+                editArea.classList.remove('hidden');
+                btn.classList.remove('hidden');
+            } else if (val === 'YA') {
+                editArea.classList.add('hidden');
+                btn.classList.remove('hidden');
+            } else {
+                editArea.classList.add('hidden');
+                btn.classList.add('hidden');
+            }
+        }
+
+        // UPDATE DATA (VALIDASI COMPLETE)
+        async function submitValidasi() {
+            const btn = event.target;
+            btn.innerHTML = "Mengupdate...";
+            const isSesuai = document.getElementById('valSesuai').value;
+
+            let payload = { status: 'Complete' };
+            
+            if(isSesuai === 'TIDAK') {
+                payload.kategori_branding = document.getElementById('editKatBranding').value;
+                payload.pabrikan = document.getElementById('editPabrikan').value;
+            }
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}?outlet_id=eq.${selectedOutletId}`, {
+                    method: 'PATCH',
+                    headers: HEADERS,
+                    body: JSON.stringify(payload)
+                });
+
+                if(res.ok) {
+                    alert('Validasi berhasil! Status berubah menjadi Complete.');
+                    backToDashboard();
+                    loadData();
+                } else {
+                    alert('Gagal mengupdate data.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            btn.innerHTML = "COMPLETE";
+        }
+
+        // NAVIGASI UI
+        function showAddForm() {
+            document.getElementById('mainDashboard').classList.add('hidden');
+            document.getElementById('addForm').classList.remove('hidden');
+        }
+
+        function backToDashboard() {
+            document.getElementById('addForm').classList.add('hidden');
+            document.getElementById('validasiForm').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
