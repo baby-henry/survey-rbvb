@@ -195,7 +195,7 @@
     </div>
 
     <script>
-        // MENGUBAH URL KE DUMMY
+        // URL DATABASE DUMMY
         const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb_dummy';
         const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
         const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
@@ -421,7 +421,11 @@
             currentData.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'outlet-item';
-                div.innerHTML = `<h4>${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4><p>${item.alamat || '-'}</p><p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>`;
+                div.innerHTML = `
+                    <h4><span style="color: #e65100;">${item.view_outlet || '-'}</span> | ${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
+                    <p>${item.alamat || '-'}</p>
+                    <p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>
+                `;
                 div.onclick = () => showValidasi(item);
                 container.appendChild(div);
             });
@@ -553,6 +557,7 @@
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
                 <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
+                <div><strong>View Outlet:</strong> <span style="color:#e65100; font-weight:bold;">${item.view_outlet || '-'}</span></div>
                 <div><strong>Outlet ID:</strong> ${item.outlet_id || '-'}</div>
                 <div><strong>Nama Outlet:</strong> ${item.nama_outlet || '-'}</div>
                 <div><strong>Alamat:</strong> ${item.alamat || '-'}</div>
