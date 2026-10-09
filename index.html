@@ -32,7 +32,6 @@
         
         .hidden { display: none !important; }
         #loading { text-align: center; font-weight: bold; color: #666; margin: 20px 0; display: none; }
-        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
         .home-menu-title { text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #333; line-height: 1.4; }
         .info-bar { background: #e0f7fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold; color: #006064; display: flex; justify-content: space-between; align-items: center;}
@@ -71,25 +70,24 @@
 
         <div class="card">
             <h3 style="margin-top: 0; margin-bottom: 15px;">Filter & Pencarian</h3>
-            <div class="filter-grid">
-                <div class="form-group"><label>Zona</label><select id="fZona" onchange="populateMainSektor()"><option value="ALL">ALL</option></select></div>
-                <div class="form-group"><label>Sektor</label><select id="fSektor" onchange="loadData()"><option value="ALL">ALL</option></select></div>
+            
+            <div class="form-group"><label>Zona</label><select id="fZona" onchange="populateMainSektor()"><option value="ALL">ALL</option></select></div>
+            <div class="form-group"><label>Sektor</label><select id="fSektor" onchange="loadData()"><option value="ALL">ALL</option></select></div>
+            <div class="form-group">
+                <label>Pabrikan</label>
+                <select id="fPabrikan" onchange="loadData()">
+                    <option value="ALL">ALL</option><option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
+                </select>
             </div>
-            <div class="filter-grid">
-                <div class="form-group">
-                    <label>Pabrikan</label>
-                    <select id="fPabrikan" onchange="loadData()">
-                        <option value="ALL">ALL</option><option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Status</label>
-                    <select id="filterStatus" onchange="loadData()">
-                        <option value="NOT COMPLETE">NOT COMPLETE</option><option value="COMPLETE">COMPLETE</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filterStatus" onchange="loadData()">
+                    <option value="NOT COMPLETE">NOT COMPLETE</option>
+                    <option value="COMPLETE">COMPLETE</option>
+                </select>
             </div>
-            <div class="form-group search-bar">
+            
+            <div class="form-group search-bar" style="margin-top: 20px;">
                 <input type="text" id="searchInput" placeholder="🔍 Cari ID atau Nama Outlet (Ketik lalu Enter)" onkeyup="handleSearch(event)">
             </div>
             <button class="btn btn-blue" onclick="showAddForm()">+ Add New Outlet</button>
