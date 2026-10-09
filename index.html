@@ -85,7 +85,7 @@
                 <div class="form-group">
                     <label>Status</label>
                     <select id="filterStatus" onchange="loadData()">
-                        <option value="Not Complete">Not Complete</option><option value="Complete">Complete</option>
+                        <option value="NOT COMPLETE">NOT COMPLETE</option><option value="COMPLETE">COMPLETE</option>
                     </select>
                 </div>
             </div>
@@ -525,14 +525,17 @@
                 brand: kat === 'Venue Branding' ? document.getElementById('addBrand').value : null,
                 menggunakan_ayo_src: document.getElementById('addAyoSrc').value || null,
                 terikat_kontrak_aktif: document.getElementById('addKontrak').value,
-                status: 'Complete'
+                status: 'COMPLETE'
             };
 
             try {
                 const res = await fetch(SUPABASE_URL, { method: 'POST', headers: HEADERS, body: JSON.stringify(payload) });
                 if(res.ok) {
                     alert('Data berhasil ditambahkan!');
-                    backToDashboard(); loadData();
+                    document.querySelectorAll('#addForm input:not([readonly]), #addForm select').forEach(i => i.value = ''); 
+                    document.getElementById('addAyoSrcGroup').classList.add('hidden');
+                    backToDashboard();
+                    loadData();
                 } else { alert('Gagal menyimpan data.'); }
             } catch (e) { console.error(e); }
             btn.innerHTML = "SUBMIT COMPLETE";
@@ -612,7 +615,7 @@
             const isAktif = document.getElementById('valKontrakAktif').value;
             const kat = selectedOutletData.kategori_branding;
 
-            let payload = { status: 'Complete', terikat_kontrak_aktif: isAktif };
+            let payload = { status: 'COMPLETE', terikat_kontrak_aktif: isAktif };
             
             if(isAktif === 'TIDAK') {
                 payload.pabrikan = document.getElementById('valEditPabrikan').value;
@@ -627,7 +630,7 @@
             try {
                 const res = await fetch(`${SUPABASE_URL}?outlet_id=eq.${selectedOutletId}`, { method: 'PATCH', headers: HEADERS, body: JSON.stringify(payload) });
                 if(res.ok) {
-                    alert('Validasi berhasil! Status berubah menjadi Complete.');
+                    alert('Validasi berhasil! Status berubah menjadi COMPLETE.');
                     backToDashboard(); loadData();
                 } else { alert('Gagal mengupdate data.'); }
             } catch (e) { console.error(e); }
