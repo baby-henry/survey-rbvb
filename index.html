@@ -14,6 +14,7 @@
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; color: #333; }
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 0.95rem; }
+        input[readonly] { background: #eee; cursor: not-allowed; color: #555; }
         
         .btn { width: 100%; padding: 12px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 1rem; }
         .btn-blue { background: #1976d2; color: white; }
@@ -36,13 +37,15 @@
         .home-menu-title { text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #333; line-height: 1.4; }
         .info-bar { background: #e0f7fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold; color: #006064; display: flex; justify-content: space-between; align-items: center;}
         .search-bar { margin-bottom: 15px; }
+        .alert-desc { font-size: 0.85rem; color: #d32f2f; font-weight: bold; margin-bottom: 15px; text-align: center; padding: 8px; background: #ffebee; border-radius: 4px;}
+        .info-box { font-size: 0.9rem; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 15px;}
     </style>
 </head>
 <body>
 
     <div class="header">Survey_RBVB</div>
 
-    <!-- HOME PAGE 1 (Pilih Area) -->
+    <!-- HOME PAGE 1 -->
     <div id="homePage1">
         <div class="card" style="margin-top: 20px; padding: 30px 20px;">
             <div class="home-menu-title">Pilih Area</div>
@@ -50,7 +53,7 @@
         </div>
     </div>
 
-    <!-- HOME PAGE 2 (Pilih DSO) -->
+    <!-- HOME PAGE 2 -->
     <div id="homePage2" class="hidden">
         <div class="card" style="margin-top: 20px; padding: 30px 20px;">
             <div class="home-menu-title" id="dsoTitle">Pilih DSO/Sub</div>
@@ -61,7 +64,6 @@
 
     <!-- MAIN DASHBOARD -->
     <div id="mainDashboard" class="hidden">
-        
         <div class="info-bar">
             <span id="displayLokasi">Area - DSO</span>
             <button onclick="backToHome()" style="background:transparent; border:1px solid #006064; color:#006064; padding:3px 8px; border-radius:3px; cursor:pointer; font-size:0.8rem;">Ganti</button>
@@ -70,43 +72,26 @@
         <div class="card">
             <h3 style="margin-top: 0; margin-bottom: 15px;">Filter & Pencarian</h3>
             <div class="filter-grid">
-                <div class="form-group">
-                    <label>Zona</label>
-                    <select id="fZona" onchange="populateMainSektor()">
-                        <option value="ALL">ALL</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Sektor</label>
-                    <select id="fSektor" onchange="loadData()">
-                        <option value="ALL">ALL</option>
-                    </select>
-                </div>
+                <div class="form-group"><label>Zona</label><select id="fZona" onchange="populateMainSektor()"><option value="ALL">ALL</option></select></div>
+                <div class="form-group"><label>Sektor</label><select id="fSektor" onchange="loadData()"><option value="ALL">ALL</option></select></div>
             </div>
             <div class="filter-grid">
                 <div class="form-group">
                     <label>Pabrikan</label>
                     <select id="fPabrikan" onchange="loadData()">
-                        <option value="ALL">ALL</option>
-                        <option value="PMI">PMI</option>
-                        <option value="GG">GG</option>
-                        <option value="KT&G">KT&G</option>
-                        <option value="Gudang Baru">Gudang Baru</option>
+                        <option value="ALL">ALL</option><option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Status</label>
                     <select id="filterStatus" onchange="loadData()">
-                        <option value="Not Complete">Not Complete</option>
-                        <option value="Complete">Complete</option>
+                        <option value="Not Complete">Not Complete</option><option value="Complete">Complete</option>
                     </select>
                 </div>
             </div>
-            
             <div class="form-group search-bar">
                 <input type="text" id="searchInput" placeholder="🔍 Cari ID atau Nama Outlet (Ketik lalu Enter)" onkeyup="handleSearch(event)">
             </div>
-            
             <button class="btn btn-blue" onclick="showAddForm()">+ Add New Outlet</button>
         </div>
 
@@ -124,48 +109,50 @@
     <div id="addForm" class="hidden">
         <div class="card">
             <h3>Add New Outlet</h3>
-            <div class="form-group"><label>Outlet ID</label><input type="text" id="addId"></div>
-            <div class="form-group"><label>Nama Outlet</label><input type="text" id="addNama"></div>
-            <div class="form-group"><label>Alamat</label><input type="text" id="addAlamat"></div>
-            
-            <hr>
-            <div class="form-group"><label>Area</label><input type="text" id="aArea" readonly style="background:#eee;"></div>
-            <div class="form-group"><label>DSO/Sub</label><input type="text" id="aDso" readonly style="background:#eee;"></div>
-            <div class="form-group"><label>Zona</label><select id="aZona" onchange="populateAddSektor()"><option value="">-- Pilih --</option></select></div>
-            <div class="form-group"><label>Sektor</label><select id="aSektor"><option value="">-- Pilih --</option></select></div>
-            <hr>
-
             <div class="form-group">
                 <label>Kategori Branding</label>
-                <select id="addKatBranding" onchange="updateDropdowns('add')">
+                <select id="addKatBranding" onchange="updateAddFormDisplay()">
                     <option value="">-- Pilih --</option>
                     <option value="Retail Branding">Retail Branding</option>
                     <option value="Venue Branding">Venue Branding</option>
                 </select>
             </div>
-            <div class="form-group"><label>Kategori Outlet</label><select id="addKatOutlet"><option value="">-- Pilih Kategori Branding Dulu --</option></select></div>
-            <div class="form-group"><label>Jenis Outlet</label><select id="addJenisOutlet"><option value="">-- Pilih Kategori Branding Dulu --</option></select></div>
-            <div class="form-group"><label>Pabrikan</label><select id="addPabrikan" onchange="updateAyoSrc('add')"><option value="">-- Pilih Kategori Branding Dulu --</option></select></div>
             
-            <div class="form-group hidden" id="addAyoSrcGroup">
-                <label>Menggunakan Ayo SRC?</label>
-                <select id="addAyoSrc">
-                    <option value="">-- Pilih --</option>
-                    <option value="YA">YA</option>
-                    <option value="TIDAK">TIDAK</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Terikat KONTRAK AKTIF hingga saat ini?</label>
-                <select id="addKontrak">
-                    <option value="">-- Pilih --</option>
-                    <option value="YA">YA</option>
-                    <option value="TIDAK">TIDAK</option>
-                </select>
-            </div>
+            <div id="addDynamicArea" class="hidden">
+                <div class="alert-desc">Pastikan Kontrak Branding masih Aktif !</div>
+                <div class="form-group"><label>Jenis Outlet</label><select id="addJenisOutlet"></select></div>
+                <div class="form-group"><label>Outlet ID</label><input type="text" id="addId"></div>
+                <div class="form-group"><label>Nama Outlet</label><input type="text" id="addNama"></div>
+                <div class="form-group"><label>Alamat</label><input type="text" id="addAlamat"></div>
+                
+                <hr>
+                <div class="form-group"><label>Zona</label><select id="aZona" onchange="populateAddSektor()"><option value="">-- Pilih --</option></select></div>
+                <div class="form-group"><label>Sektor</label><select id="aSektor"><option value="">-- Pilih --</option></select></div>
+                <hr>
 
-            <button class="btn btn-green" onclick="submitAddNew()">SUBMIT COMPLETE</button>
+                <div class="form-group">
+                    <label>Pabrikan</label>
+                    <select id="addPabrikan" onchange="populateAddBrand()">
+                        <option value="">-- Pilih --</option>
+                        <option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
+                    </select>
+                </div>
+                
+                <div class="form-group hidden" id="addJenisBrandGroup"><label>Jenis Branding</label><select id="addJenisBranding"><option value="">-- Pilih Pabrikan --</option></select></div>
+                <div class="form-group hidden" id="addBrandGroup"><label>Brand</label><select id="addBrand"><option value="">-- Pilih Pabrikan --</option></select></div>
+                
+                <div class="form-group hidden" id="addAyoSrcGroup">
+                    <label>Menggunakan Ayo SRC?</label>
+                    <select id="addAyoSrc"><option value="">-- Pilih --</option><option value="YA">YA</option><option value="TIDAK">TIDAK</option></select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Kontrak Branding masih Aktif?</label>
+                    <input type="text" id="addKontrak" value="YA" readonly>
+                </div>
+
+                <button class="btn btn-green" onclick="submitAddNew()">SUBMIT COMPLETE</button>
+            </div>
             <button class="btn btn-outline" onclick="backToDashboard()">Batal</button>
         </div>
     </div>
@@ -174,46 +161,33 @@
     <div id="validasiForm" class="hidden">
         <div class="card">
             <h3>Validasi Outlet</h3>
-            <div id="infoOutlet"></div>
+            <div id="infoOutlet" class="info-box"></div>
+            
             <hr>
             <div class="form-group">
-                <label>Apakah branding masih sesuai?</label>
-                <select id="valSesuai" onchange="toggleEdit()">
+                <label>Kontrak Branding masih Aktif?</label>
+                <select id="valKontrakAktif" onchange="toggleValEdit()">
                     <option value="">-- Pilih --</option>
                     <option value="YA">YA</option>
                     <option value="TIDAK">TIDAK</option>
                 </select>
             </div>
             
-            <div id="editArea" class="hidden">
+            <div id="valEditArea" class="hidden">
+                <div class="alert-desc" style="color:#1976d2; background:#e3f2fd;">Kontrak Tidak Aktif: Silakan Update Data Berikut</div>
                 <div class="form-group">
-                    <label>Kategori Branding (Update)</label>
-                    <select id="editKatBranding" onchange="updateDropdowns('edit')">
+                    <label>Pabrikan (Update)</label>
+                    <select id="valEditPabrikan" onchange="populateValEditBrand()">
                         <option value="">-- Pilih --</option>
-                        <option value="Retail Branding">Retail Branding</option>
-                        <option value="Venue Branding">Venue Branding</option>
+                        <option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Kategori Outlet</label><select id="editKatOutlet"><option value="">-- Pilih Kategori Branding Dulu --</option></select></div>
-                <div class="form-group"><label>Jenis Outlet</label><select id="editJenisOutlet"><option value="">-- Pilih Kategori Branding Dulu --</option></select></div>
-                <div class="form-group"><label>Pabrikan</label><select id="editPabrikan" onchange="updateAyoSrc('edit')"><option value="">-- Pilih Kategori Branding Dulu --</option></select></div>
+                <div class="form-group hidden" id="valEditJenisBrandGroup"><label>Jenis Branding</label><select id="valEditJenisBranding"></select></div>
+                <div class="form-group hidden" id="valEditBrandGroup"><label>Brand</label><select id="valEditBrand"></select></div>
                 
-                <div class="form-group hidden" id="editAyoSrcGroup">
+                <div class="form-group hidden" id="valEditAyoSrcGroup">
                     <label>Menggunakan Ayo SRC?</label>
-                    <select id="editAyoSrc">
-                        <option value="">-- Pilih --</option>
-                        <option value="YA">YA</option>
-                        <option value="TIDAK">TIDAK</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Terikat KONTRAK AKTIF hingga saat ini?</label>
-                    <select id="editKontrak">
-                        <option value="">-- Pilih --</option>
-                        <option value="YA">YA</option>
-                        <option value="TIDAK">TIDAK</option>
-                    </select>
+                    <select id="valEditAyoSrc"><option value="">-- Pilih --</option><option value="YA">YA</option><option value="TIDAK">TIDAK</option></select>
                 </div>
             </div>
 
@@ -223,65 +197,32 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb';
+        // MENGUBAH URL KE DUMMY
+        const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb_dummy';
         const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
-        
-        const HEADERS = {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        };
+        const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
-        let selectedHomeArea = "";
-        let selectedHomeDso = "";
+        let selectedHomeArea = ""; let selectedHomeDso = ""; let currentData = []; let searchTimer;
+        let selectedOutletData = null; 
 
-        const dropdownOptions = {
-            retail: {
-                katOutlet: ["Small Retailer", "Shop", "Modern Retailer", "Special Retailer"],
-                jenisOutlet: [],
-                pabrikan: ["SRC", "GGSP", "Mitra Sampoerna", "KPP", "Gudang Baru"]
+        // === LIST MASTER BRAND & OPTIONS DINAMIS ===
+        const listJenisOutletRetail = ["Warung", "Minimarket", "Supermarket", "Wholesaler 1", "Wholesaler 2", "Wholesaler 3", "Wholesaler 4", "Wholesaler 5", "Horeka", "Koperasi"];
+        const listJenisOutletVenue = ["Beer House", "Billiard", "Café", "Coffee Shop / Kedai Kopi", "Foodcourt / Pujasera", "Kantin", "Lounge", "Nightlife", "Resto", "War. Makan/Warkop", "Others"];
+
+        const masterBrand = {
+            "Retail Branding": {
+                "PMI": { "jenis_branding": ["Mitra Sampoerna", "SRC"], "brand": [] },
+                "GG": { "jenis_branding": ["GGSP"], "brand": [] },
+                "KT&G": { "jenis_branding": ["KPP"], "brand": [] },
+                "Gudang Baru": { "jenis_branding": ["Gudang Baru"], "brand": [] }
             },
-            venue: {
-                katOutlet: [],
-                jenisOutlet: ["Beer House", "Billiard", "Café", "Coffee Shop / Kedai Kopi", "Foodcourt / Pujasera", "Kantin", "Lounge", "Nightlife", "Resto", "War. Makan/Warkop", "Others"],
-                pabrikan: ["PMI", "GG", "KT&G", "Gudang Baru"]
+            "Venue Branding": {
+                "GG": { "jenis_branding": [], "brand": ["GG Int'l F", "GG Merah K", "GG Shiver", "GG Signature F", "GG Surya F", "GG Surya Pro F", "GG Surya Pro Mild", "Surya Nusantara K"] },
+                "Gudang Baru": { "jenis_branding": [], "brand": ["Gajah Baru F", "Gajah Baru K", "Galang Baru Intercontinental F", "Galang Baru K"] },
+                "KT&G": { "jenis_branding": [], "brand": ["Esse", "Esse Change"] },
+                "PMI": { "jenis_branding": [], "brand": ["A Hijau K", "A Mild", "A Prima K", "A Splash", "A Zetta F", "Dji Sam Soe Kretek", "Dji Sam Soe Magnum Filter F", "Dji Sam Soe Magnum Kretek Gold Wraps K", "Marlboro", "Marlboro Filter Black F"] }
             }
         };
-
-        function updateDropdowns(prefix) {
-            const val = document.getElementById(prefix + 'KatBranding').value;
-            const katOutlet = document.getElementById(prefix + 'KatOutlet');
-            const jenisOutlet = document.getElementById(prefix + 'JenisOutlet');
-            const pabrikan = document.getElementById(prefix + 'Pabrikan');
-
-            katOutlet.innerHTML = '<option value="">-- Pilih --</option>';
-            jenisOutlet.innerHTML = '<option value="">-- Pilih --</option>';
-            pabrikan.innerHTML = '<option value="">-- Pilih --</option>';
-            document.getElementById(prefix + 'AyoSrcGroup').classList.add('hidden');
-            document.getElementById(prefix + 'AyoSrc').value = '';
-
-            if (val === 'Retail Branding') {
-                dropdownOptions.retail.katOutlet.forEach(o => katOutlet.innerHTML += `<option value="${o}">${o}</option>`);
-                jenisOutlet.innerHTML = '<option value="">- Kosong (Tidak Perlu Diisi) -</option>';
-                dropdownOptions.retail.pabrikan.forEach(o => pabrikan.innerHTML += `<option value="${o}">${o}</option>`);
-            } else if (val === 'Venue Branding') {
-                katOutlet.innerHTML = '<option value="">- Kosong (Tidak Perlu Diisi) -</option>';
-                dropdownOptions.venue.jenisOutlet.forEach(o => jenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
-                dropdownOptions.venue.pabrikan.forEach(o => pabrikan.innerHTML += `<option value="${o}">${o}</option>`);
-            }
-        }
-
-        function updateAyoSrc(prefix) {
-            const pabrikanVal = document.getElementById(prefix + 'Pabrikan').value;
-            const ayoGroup = document.getElementById(prefix + 'AyoSrcGroup');
-            if (pabrikanVal === 'SRC' || pabrikanVal === 'Mitra Sampoerna') {
-                ayoGroup.classList.remove('hidden');
-            } else {
-                ayoGroup.classList.add('hidden');
-                document.getElementById(prefix + 'AyoSrc').value = '';
-            }
-        }
 
         // === MASTER DATA LOKASI ===
         const masterLokasi = {
@@ -367,19 +308,15 @@
             }
         };
 
-        // === FUNGSI HOME PAGE 1 & 2 ===
-        window.addEventListener('DOMContentLoaded', () => {
-            initHome();
-        });
+        window.addEventListener('DOMContentLoaded', () => { initHome(); });
 
+        // === FUNGSI HOME PAGE ===
         function initHome() {
             const areaContainer = document.getElementById('areaButtonContainer');
             areaContainer.innerHTML = '';
             for (let area in masterLokasi) {
                 const btn = document.createElement('button');
-                btn.className = 'btn-menu';
-                btn.innerText = area;
-                btn.onclick = () => selectArea(area);
+                btn.className = 'btn-menu'; btn.innerText = area; btn.onclick = () => selectArea(area);
                 areaContainer.appendChild(btn);
             }
         }
@@ -388,31 +325,23 @@
             selectedHomeArea = area;
             document.getElementById('homePage1').classList.add('hidden');
             document.getElementById('homePage2').classList.remove('hidden');
-            
             document.getElementById('dsoTitle').innerText = `Area: ${area}\n\nPilih DSO/Sub`;
             
             const dsoContainer = document.getElementById('dsoButtonContainer');
             dsoContainer.innerHTML = '';
-            
             for (let dso in masterLokasi[area]) {
                 const btn = document.createElement('button');
-                btn.className = 'btn-menu';
-                btn.innerText = dso;
-                btn.onclick = () => selectDso(dso);
+                btn.className = 'btn-menu'; btn.innerText = dso; btn.onclick = () => selectDso(dso);
                 dsoContainer.appendChild(btn);
             }
         }
 
-        function backToHomePage1() {
-            document.getElementById('homePage2').classList.add('hidden');
-            document.getElementById('homePage1').classList.remove('hidden');
-        }
+        function backToHomePage1() { document.getElementById('homePage2').classList.add('hidden'); document.getElementById('homePage1').classList.remove('hidden'); }
 
         function selectDso(dso) {
             selectedHomeDso = dso;
             document.getElementById('homePage2').classList.add('hidden');
             document.getElementById('mainDashboard').classList.remove('hidden');
-            
             document.getElementById('displayLokasi').innerText = `${selectedHomeArea} ➔ ${selectedHomeDso}`;
             
             const fZona = document.getElementById('fZona');
@@ -420,8 +349,7 @@
             for (let zona in masterLokasi[selectedHomeArea][selectedHomeDso]) {
                 fZona.innerHTML += `<option value="${zona}">${zona}</option>`;
             }
-            
-            populateMainSektor(); // Auto set Sektor dropdown & trigger data load
+            populateMainSektor(); 
         }
 
         function backToHome() {
@@ -436,17 +364,13 @@
             const zona = document.getElementById('fZona').value;
             const fSektor = document.getElementById('fSektor');
             fSektor.innerHTML = '<option value="ALL">ALL</option>';
-
             if (zona !== "ALL") {
                 masterLokasi[selectedHomeArea][selectedHomeDso][zona].forEach(sektor => {
                     fSektor.innerHTML += `<option value="${sektor}">${sektor}</option>`;
                 });
             }
-            loadData(); // Auto fetch every time filter changes
+            loadData();
         }
-
-        let currentData = [];
-        let searchTimer;
 
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
@@ -460,18 +384,15 @@
             const searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
 
             let url = `${SUPABASE_URL}?status=eq.${status}&area=eq.${encodeURIComponent(selectedHomeArea)}&dso_sub=eq.${encodeURIComponent(selectedHomeDso)}`;
-            
             if(zona !== 'ALL') url += `&zona=eq.${encodeURIComponent(zona)}`;
             if(sektor !== 'ALL') url += `&sektor=eq.${encodeURIComponent(sektor)}`;
             if(pabrikan !== 'ALL') url += `&pabrikan=eq.${encodeURIComponent(pabrikan)}`;
-            
             url += `&select=*&limit=200`; 
 
             try {
                 const response = await fetch(url, { headers: HEADERS });
                 if(!response.ok) throw new Error("Gagal load database.");
                 let data = await response.json();
-
                 if (searchKeyword !== "") {
                     data = data.filter(item => {
                         const strId = (item.outlet_id || "").toLowerCase();
@@ -479,46 +400,30 @@
                         return strId.includes(searchKeyword) || strNama.includes(searchKeyword);
                     });
                 }
-
                 currentData = data;
                 renderList();
-            } catch (error) {
-                alert(error.message);
-                document.getElementById('loading').style.display = 'none';
-            }
+            } catch (error) { alert(error.message); document.getElementById('loading').style.display = 'none'; }
         }
 
         function handleSearch(event) {
             clearTimeout(searchTimer);
-            if(event.key === 'Enter') {
-                loadData();
-            } else {
-                searchTimer = setTimeout(() => {
-                    loadData();
-                }, 800);
-            }
+            if(event.key === 'Enter') loadData();
+            else searchTimer = setTimeout(() => { loadData(); }, 800);
         }
 
         function renderList() {
             const container = document.getElementById('listContainer');
-            container.innerHTML = '';
-            document.getElementById('loading').style.display = 'none';
-            
+            container.innerHTML = ''; document.getElementById('loading').style.display = 'none';
             document.getElementById('totalOutlet').innerText = `Total: ${currentData.length}`;
 
             if(currentData.length === 0) {
                 container.innerHTML = '<p style="text-align:center;">Tidak ada data yang cocok dengan filter / pencarian.</p>';
                 return;
             }
-
             currentData.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'outlet-item';
-                div.innerHTML = `
-                    <h4>${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
-                    <p>${item.alamat || '-'}</p>
-                    <p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>
-                `;
+                div.innerHTML = `<h4>${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4><p>${item.alamat || '-'}</p><p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>`;
                 div.onclick = () => showValidasi(item);
                 container.appendChild(div);
             });
@@ -528,10 +433,13 @@
         function showAddForm() {
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('addForm').classList.remove('hidden');
+            
+            // Reset dropdowns
+            document.getElementById('addKatBranding').value = '';
+            updateAddFormDisplay();
 
             document.getElementById('aArea').value = selectedHomeArea;
             document.getElementById('aDso').value = selectedHomeDso;
-
             const aZona = document.getElementById('aZona');
             aZona.innerHTML = '<option value="">-- Pilih --</option>';
             for (let zona in masterLokasi[selectedHomeArea][selectedHomeDso]) {
@@ -544,23 +452,63 @@
             const zona = document.getElementById('aZona').value;
             const aSektor = document.getElementById('aSektor');
             aSektor.innerHTML = '<option value="">-- Pilih --</option>';
+            if (zona !== "") masterLokasi[selectedHomeArea][selectedHomeDso][zona].forEach(sektor => { aSektor.innerHTML += `<option value="${sektor}">${sektor}</option>`; });
+        }
 
-            if (zona !== "") {
-                masterLokasi[selectedHomeArea][selectedHomeDso][zona].forEach(sektor => {
-                    aSektor.innerHTML += `<option value="${sektor}">${sektor}</option>`;
-                });
+        function updateAddFormDisplay() {
+            const katBrand = document.getElementById('addKatBranding').value;
+            const dynamicArea = document.getElementById('addDynamicArea');
+            const dJenisOutlet = document.getElementById('addJenisOutlet');
+            
+            document.getElementById('addPabrikan').value = '';
+            populateAddBrand();
+
+            if(katBrand === "") {
+                dynamicArea.classList.add('hidden');
+            } else {
+                dynamicArea.classList.remove('hidden');
+                dJenisOutlet.innerHTML = '<option value="">-- Pilih --</option>';
+                if(katBrand === "Retail Branding") {
+                    listJenisOutletRetail.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
+                } else if(katBrand === "Venue Branding") {
+                    listJenisOutletVenue.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
+                }
+            }
+        }
+
+        function populateAddBrand() {
+            const kat = document.getElementById('addKatBranding').value;
+            const pab = document.getElementById('addPabrikan').value;
+            
+            const groupJB = document.getElementById('addJenisBrandGroup');
+            const elJB = document.getElementById('addJenisBranding');
+            const groupBr = document.getElementById('addBrandGroup');
+            const elBr = document.getElementById('addBrand');
+            const ayoGroup = document.getElementById('addAyoSrcGroup');
+            
+            groupJB.classList.add('hidden'); groupBr.classList.add('hidden'); ayoGroup.classList.add('hidden');
+            elJB.innerHTML = '<option value="">-- Pilih --</option>';
+            elBr.innerHTML = '<option value="">-- Pilih --</option>';
+            document.getElementById('addAyoSrc').value = '';
+
+            if(kat && pab && masterBrand[kat] && masterBrand[kat][pab]) {
+                if(kat === 'Retail Branding') {
+                    groupJB.classList.remove('hidden');
+                    masterBrand[kat][pab].jenis_branding.forEach(o => elJB.innerHTML += `<option value="${o}">${o}</option>`);
+                    if(pab === 'PMI') ayoGroup.classList.remove('hidden');
+                } else if(kat === 'Venue Branding') {
+                    groupBr.classList.remove('hidden');
+                    masterBrand[kat][pab].brand.forEach(o => elBr.innerHTML += `<option value="${o}">${o}</option>`);
+                }
             }
         }
 
         async function submitAddNew() {
+            const kat = document.getElementById('addKatBranding').value;
             const zona = document.getElementById('aZona').value;
-            if(!zona) {
-                alert("Harap pilih Zona!");
-                return;
-            }
+            if(!kat || !zona) { alert("Harap isi Kategori Branding dan Zona!"); return; }
 
-            const btn = event.target;
-            btn.innerHTML = "Menyimpan...";
+            const btn = event.target; btn.innerHTML = "Menyimpan...";
             
             const payload = {
                 outlet_id: document.getElementById('addId').value,
@@ -570,113 +518,119 @@
                 dso_sub: selectedHomeDso,
                 zona: zona,
                 sektor: document.getElementById('aSektor').value,
-                kategori_branding: document.getElementById('addKatBranding').value,
-                kategori_outlet: document.getElementById('addKatOutlet').value,
+                kategori_branding: kat,
                 jenis_outlet: document.getElementById('addJenisOutlet').value,
                 pabrikan: document.getElementById('addPabrikan').value,
-                menggunakan_ayo_src: document.getElementById('addAyoSrc').value,
+                jenis_branding: kat === 'Retail Branding' ? document.getElementById('addJenisBranding').value : null,
+                brand: kat === 'Venue Branding' ? document.getElementById('addBrand').value : null,
+                menggunakan_ayo_src: document.getElementById('addAyoSrc').value || null,
                 terikat_kontrak_aktif: document.getElementById('addKontrak').value,
                 status: 'Complete'
             };
 
             try {
-                const res = await fetch(SUPABASE_URL, {
-                    method: 'POST',
-                    headers: HEADERS,
-                    body: JSON.stringify(payload)
-                });
-                
+                const res = await fetch(SUPABASE_URL, { method: 'POST', headers: HEADERS, body: JSON.stringify(payload) });
                 if(res.ok) {
                     alert('Data berhasil ditambahkan!');
-                    document.querySelectorAll('#addForm input:not([readonly]), #addForm select').forEach(i => i.value = ''); 
-                    document.getElementById('addAyoSrcGroup').classList.add('hidden');
-                    backToDashboard();
-                    loadData();
-                } else {
-                    alert('Gagal menyimpan data.');
-                }
-            } catch (e) {
-                console.error(e);
-            }
+                    backToDashboard(); loadData();
+                } else { alert('Gagal menyimpan data.'); }
+            } catch (e) { console.error(e); }
             btn.innerHTML = "SUBMIT COMPLETE";
         }
 
         // === FUNGSI VALIDASI ===
         function showValidasi(item) {
+            selectedOutletData = item;
             selectedOutletId = item.outlet_id;
+            
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('validasiForm').classList.remove('hidden');
-            document.getElementById('valSesuai').value = "";
-            document.getElementById('editArea').classList.add('hidden');
+            document.getElementById('valKontrakAktif').value = "";
+            document.getElementById('valEditArea').classList.add('hidden');
             document.getElementById('btnCompleteVal').classList.add('hidden');
 
             document.getElementById('infoOutlet').innerHTML = `
-                <div style="font-size: 0.9rem; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                    <div><strong>Outlet ID:</strong> ${item.outlet_id || '-'}</div>
-                    <div><strong>Nama Outlet:</strong> ${item.nama_outlet || '-'}</div>
-                    <div><strong>Zona:</strong> ${item.zona || '-'}</div>
-                    <div><strong>Sektor:</strong> ${item.sektor || '-'}</div>
-                    <div><strong>Alamat:</strong> ${item.alamat || '-'}</div>
-                    <div><strong>Kategori Branding:</strong> ${item.kategori_branding || '-'}</div>
-                    <div><strong>Kategori Outlet:</strong> ${item.kategori_outlet || '-'}</div>
-                    <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
-                    <div><strong>Pabrikan:</strong> ${item.pabrikan || '-'}</div>
-                    <div><strong>Menggunakan Ayo SRC?:</strong> ${item.menggunakan_ayo_src || '-'}</div>
-                    <div><strong>Terikat Kontrak Aktif?:</strong> ${item.terikat_kontrak_aktif || '-'}</div>
-                </div>
+                <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
+                <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
+                <div><strong>Outlet ID:</strong> ${item.outlet_id || '-'}</div>
+                <div><strong>Nama Outlet:</strong> ${item.nama_outlet || '-'}</div>
+                <div><strong>Alamat:</strong> ${item.alamat || '-'}</div>
+                <div><strong>Zona:</strong> ${item.zona || '-'} | <strong>Sektor:</strong> ${item.sektor || '-'}</div>
+                <hr style="border:0.5px solid #ccc; margin:8px 0;">
+                <div><strong>Pabrikan Saat Ini:</strong> ${item.pabrikan || '-'}</div>
+                ${item.kategori_branding === 'Retail Branding' ? `<div><strong>Jenis Branding:</strong> ${item.jenis_branding || '-'}</div>` : ''}
+                ${item.kategori_branding === 'Venue Branding' ? `<div><strong>Brand:</strong> ${item.brand || '-'}</div>` : ''}
+                ${item.kategori_branding === 'Retail Branding' && item.pabrikan === 'PMI' ? `<div><strong>Menggunakan Ayo SRC?:</strong> ${item.menggunakan_ayo_src || '-'}</div>` : ''}
             `;
         }
 
-        function toggleEdit() {
-            const val = document.getElementById('valSesuai').value;
-            const editArea = document.getElementById('editArea');
+        function toggleValEdit() {
+            const isAktif = document.getElementById('valKontrakAktif').value;
+            const editArea = document.getElementById('valEditArea');
             const btn = document.getElementById('btnCompleteVal');
 
-            if (val === 'TIDAK') {
-                editArea.classList.remove('hidden');
-                btn.classList.remove('hidden');
-            } else if (val === 'YA') {
-                editArea.classList.add('hidden');
-                btn.classList.remove('hidden');
+            if (isAktif === 'TIDAK') {
+                editArea.classList.remove('hidden'); btn.classList.remove('hidden');
+                document.getElementById('valEditPabrikan').value = '';
+                populateValEditBrand();
+            } else if (isAktif === 'YA') {
+                editArea.classList.add('hidden'); btn.classList.remove('hidden');
             } else {
-                editArea.classList.add('hidden');
-                btn.classList.add('hidden');
+                editArea.classList.add('hidden'); btn.classList.add('hidden');
+            }
+        }
+
+        function populateValEditBrand() {
+            const kat = selectedOutletData.kategori_branding;
+            const pab = document.getElementById('valEditPabrikan').value;
+            
+            const groupJB = document.getElementById('valEditJenisBrandGroup');
+            const elJB = document.getElementById('valEditJenisBranding');
+            const groupBr = document.getElementById('valEditBrandGroup');
+            const elBr = document.getElementById('valEditBrand');
+            const ayoGroup = document.getElementById('valEditAyoSrcGroup');
+            
+            groupJB.classList.add('hidden'); groupBr.classList.add('hidden'); ayoGroup.classList.add('hidden');
+            elJB.innerHTML = '<option value="">-- Pilih --</option>';
+            elBr.innerHTML = '<option value="">-- Pilih --</option>';
+            document.getElementById('valEditAyoSrc').value = '';
+
+            if(kat && pab && masterBrand[kat] && masterBrand[kat][pab]) {
+                if(kat === 'Retail Branding') {
+                    groupJB.classList.remove('hidden');
+                    masterBrand[kat][pab].jenis_branding.forEach(o => elJB.innerHTML += `<option value="${o}">${o}</option>`);
+                    if(pab === 'PMI') ayoGroup.classList.remove('hidden');
+                } else if(kat === 'Venue Branding') {
+                    groupBr.classList.remove('hidden');
+                    masterBrand[kat][pab].brand.forEach(o => elBr.innerHTML += `<option value="${o}">${o}</option>`);
+                }
             }
         }
 
         async function submitValidasi() {
-            const btn = event.target;
-            btn.innerHTML = "Mengupdate...";
-            const isSesuai = document.getElementById('valSesuai').value;
+            const btn = event.target; btn.innerHTML = "Mengupdate...";
+            const isAktif = document.getElementById('valKontrakAktif').value;
+            const kat = selectedOutletData.kategori_branding;
 
-            let payload = { status: 'Complete' };
+            let payload = { status: 'Complete', terikat_kontrak_aktif: isAktif };
             
-            if(isSesuai === 'TIDAK') {
-                payload.kategori_branding = document.getElementById('editKatBranding').value;
-                payload.kategori_outlet = document.getElementById('editKatOutlet').value;
-                payload.jenis_outlet = document.getElementById('editJenisOutlet').value;
-                payload.pabrikan = document.getElementById('editPabrikan').value;
-                payload.menggunakan_ayo_src = document.getElementById('editAyoSrc').value;
-                payload.terikat_kontrak_aktif = document.getElementById('editKontrak').value;
+            if(isAktif === 'TIDAK') {
+                payload.pabrikan = document.getElementById('valEditPabrikan').value;
+                if(kat === 'Retail Branding') {
+                    payload.jenis_branding = document.getElementById('valEditJenisBranding').value;
+                    payload.menggunakan_ayo_src = document.getElementById('valEditAyoSrc').value || null;
+                } else if(kat === 'Venue Branding') {
+                    payload.brand = document.getElementById('valEditBrand').value;
+                }
             }
 
             try {
-                const res = await fetch(`${SUPABASE_URL}?outlet_id=eq.${selectedOutletId}`, {
-                    method: 'PATCH',
-                    headers: HEADERS,
-                    body: JSON.stringify(payload)
-                });
-
+                const res = await fetch(`${SUPABASE_URL}?outlet_id=eq.${selectedOutletId}`, { method: 'PATCH', headers: HEADERS, body: JSON.stringify(payload) });
                 if(res.ok) {
                     alert('Validasi berhasil! Status berubah menjadi Complete.');
-                    backToDashboard();
-                    loadData();
-                } else {
-                    alert('Gagal mengupdate data.');
-                }
-            } catch (e) {
-                console.error(e);
-            }
+                    backToDashboard(); loadData();
+                } else { alert('Gagal mengupdate data.'); }
+            } catch (e) { console.error(e); }
             btn.innerHTML = "COMPLETE";
         }
 
