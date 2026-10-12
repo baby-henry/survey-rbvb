@@ -32,12 +32,18 @@
         
         .hidden { display: none !important; }
         #loading { text-align: center; font-weight: bold; color: #666; margin: 20px 0; display: none; }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
         .home-menu-title { text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #333; line-height: 1.4; }
         .info-bar { background: #e0f7fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold; color: #006064; display: flex; justify-content: space-between; align-items: center;}
         .search-bar { margin-bottom: 15px; }
         .alert-desc { font-size: 0.85rem; color: #d32f2f; font-weight: bold; margin-bottom: 15px; text-align: center; padding: 8px; background: #ffebee; border-radius: 4px;}
         .info-box { font-size: 0.9rem; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 15px;}
+        
+        /* Styling untuk Radio Buttons */
+        .radio-label { display: flex; align-items: center; font-weight: normal; font-size: 0.95rem; margin-bottom: 8px; cursor: pointer; background: #fff; padding: 8px; border: 1px solid #ccc; border-radius: 5px; transition: 0.2s; }
+        .radio-label input { width: auto; margin-right: 10px; transform: scale(1.2); }
+        .radio-label:hover { background: #f0f8ff; border-color: #1976d2; }
     </style>
 </head>
 <body>
@@ -124,6 +130,8 @@
                 <div class="form-group"><label>Alamat</label><input type="text" id="addAlamat"></div>
                 
                 <hr>
+                <div class="form-group"><label>Area</label><input type="text" id="aArea" readonly style="background:#eee;"></div>
+                <div class="form-group"><label>DSO/Sub</label><input type="text" id="aDso" readonly style="background:#eee;"></div>
                 <div class="form-group"><label>Zona</label><select id="aZona" onchange="populateAddSektor()"><option value="">-- Pilih --</option></select></div>
                 <div class="form-group"><label>Sektor</label><select id="aSektor"><option value="">-- Pilih --</option></select></div>
                 <hr>
@@ -149,7 +157,7 @@
                     <input type="text" id="addKontrak" value="YA" readonly>
                 </div>
 
-                <button class="btn btn-green" onclick="submitAddNew()">SUBMIT COMPLETE</button>
+                <button class="btn btn-green" onclick="submitAddNew()">COMPLETE</button>
             </div>
             <button class="btn btn-outline" onclick="backToDashboard()">Batal</button>
         </div>
@@ -163,16 +171,14 @@
             
             <hr>
             <div class="form-group">
-                <label>Kontrak Branding masih Aktif?</label>
-                <select id="valKontrakAktif" onchange="toggleValEdit()">
-                    <option value="">-- Pilih --</option>
-                    <option value="YA">YA</option>
-                    <option value="TIDAK">TIDAK</option>
-                </select>
+                <label style="color:#d32f2f; font-size:1rem; margin-bottom:10px;">Data masih sesuai?</label>
+                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ya" onchange="toggleValEdit()"> Ya</label>
+                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Branding non-aktif" onchange="toggleValEdit()"> Branding non-aktif</label>
+                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ada perubahan" onchange="toggleValEdit()"> Ada perubahan</label>
             </div>
             
             <div id="valEditArea" class="hidden">
-                <div class="alert-desc" style="color:#1976d2; background:#e3f2fd;">Kontrak Tidak Aktif: Silakan Update Data Berikut</div>
+                <div class="alert-desc" style="color:#1976d2; background:#e3f2fd;">Ada Perubahan: Silakan Update Data Berikut</div>
                 <div class="form-group">
                     <label>Pabrikan (Update)</label>
                     <select id="valEditPabrikan" onchange="populateValEditBrand()">
@@ -180,8 +186,8 @@
                         <option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
                     </select>
                 </div>
-                <div class="form-group hidden" id="valEditJenisBrandGroup"><label>Jenis Branding</label><select id="valEditJenisBranding"></select></div>
-                <div class="form-group hidden" id="valEditBrandGroup"><label>Brand</label><select id="valEditBrand"></select></div>
+                <div class="form-group hidden" id="valEditJenisBrandGroup"><label>Jenis Branding (Update)</label><select id="valEditJenisBranding"></select></div>
+                <div class="form-group hidden" id="valEditBrandGroup"><label>Brand (Update)</label><select id="valEditBrand"></select></div>
                 
                 <div class="form-group hidden" id="valEditAyoSrcGroup">
                     <label>Menggunakan Ayo SRC?</label>
@@ -385,7 +391,7 @@
             if(zona !== 'ALL') url += `&zona=eq.${encodeURIComponent(zona)}`;
             if(sektor !== 'ALL') url += `&sektor=eq.${encodeURIComponent(sektor)}`;
             if(pabrikan !== 'ALL') url += `&pabrikan=eq.${encodeURIComponent(pabrikan)}`;
-            url += `&select=*&limit=200`; 
+            url += `&select=*&limit=10000`; 
 
             try {
                 const response = await fetch(url, { headers: HEADERS });
@@ -421,8 +427,11 @@
             currentData.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'outlet-item';
+                
+                const highlightText = item.kategori_branding === 'Retail Branding' ? (item.jenis_branding || '-') : (item.brand || '-');
+                
                 div.innerHTML = `
-                    <h4><span style="color: #e65100;">${item.view_outlet || '-'}</span> | ${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
+                    <h4><span style="color: #e65100;">${highlightText}</span> | ${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
                     <p>${item.alamat || '-'}</p>
                     <p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>
                 `;
@@ -436,16 +445,18 @@
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('addForm').classList.remove('hidden');
             
-            // Reset dropdowns
             document.getElementById('addKatBranding').value = '';
             updateAddFormDisplay();
 
             document.getElementById('aArea').value = selectedHomeArea;
             document.getElementById('aDso').value = selectedHomeDso;
+            
             const aZona = document.getElementById('aZona');
             aZona.innerHTML = '<option value="">-- Pilih --</option>';
-            for (let zona in masterLokasi[selectedHomeArea][selectedHomeDso]) {
-                aZona.innerHTML += `<option value="${zona}">${zona}</option>`;
+            if(masterLokasi[selectedHomeArea] && masterLokasi[selectedHomeArea][selectedHomeDso]) {
+                for (let zona in masterLokasi[selectedHomeArea][selectedHomeDso]) {
+                    aZona.innerHTML += `<option value="${zona}">${zona}</option>`;
+                }
             }
             document.getElementById('aSektor').innerHTML = '<option value="">-- Pilih --</option>';
         }
@@ -454,7 +465,11 @@
             const zona = document.getElementById('aZona').value;
             const aSektor = document.getElementById('aSektor');
             aSektor.innerHTML = '<option value="">-- Pilih --</option>';
-            if (zona !== "") masterLokasi[selectedHomeArea][selectedHomeDso][zona].forEach(sektor => { aSektor.innerHTML += `<option value="${sektor}">${sektor}</option>`; });
+            if (zona !== "" && masterLokasi[selectedHomeArea][selectedHomeDso][zona]) {
+                masterLokasi[selectedHomeArea][selectedHomeDso][zona].forEach(sektor => { 
+                    aSektor.innerHTML += `<option value="${sektor}">${sektor}</option>`; 
+                });
+            }
         }
 
         function updateAddFormDisplay() {
@@ -505,27 +520,66 @@
             }
         }
 
+        // FUNGSI SUBMIT ADD NEW DENGAN VALIDASI KETAT
         async function submitAddNew() {
             const kat = document.getElementById('addKatBranding').value;
+            if(!kat) return alert("Harap pilih Kategori Branding!");
+            
+            const jenisOutlet = document.getElementById('addJenisOutlet').value;
+            if(!jenisOutlet) return alert("Harap pilih Jenis Outlet!");
+            
+            const outletId = document.getElementById('addId').value.trim();
+            if(!outletId) return alert("Harap isi Outlet ID!");
+            
+            const nama = document.getElementById('addNama').value.trim();
+            if(!nama) return alert("Harap isi Nama Outlet!");
+            
+            const alamat = document.getElementById('addAlamat').value.trim();
+            if(!alamat) return alert("Harap isi Alamat Outlet!");
+            
             const zona = document.getElementById('aZona').value;
-            if(!kat || !zona) { alert("Harap isi Kategori Branding dan Zona!"); return; }
+            if(!zona) return alert("Harap pilih Zona!");
+            
+            const sektor = document.getElementById('aSektor').value;
+            if(!sektor) return alert("Harap pilih Sektor!");
+            
+            const pabrikan = document.getElementById('addPabrikan').value;
+            if(!pabrikan) return alert("Harap pilih Pabrikan!");
+            
+            let jenisBranding = null;
+            let brand = null;
+            let ayoSrc = null;
 
-            const btn = event.target; btn.innerHTML = "Menyimpan...";
+            if (kat === 'Retail Branding') {
+                jenisBranding = document.getElementById('addJenisBranding').value;
+                if(!jenisBranding) return alert("Harap pilih Jenis Branding!");
+                
+                if (pabrikan === 'PMI') {
+                    ayoSrc = document.getElementById('addAyoSrc').value;
+                    if(!ayoSrc) return alert("Harap pilih Menggunakan Ayo SRC!");
+                }
+            } else if (kat === 'Venue Branding') {
+                brand = document.getElementById('addBrand').value;
+                if(!brand) return alert("Harap pilih Brand!");
+            }
+
+            const btn = event.target; 
+            btn.innerHTML = "Menyimpan...";
             
             const payload = {
-                outlet_id: document.getElementById('addId').value,
-                nama_outlet: document.getElementById('addNama').value,
-                alamat: document.getElementById('addAlamat').value,
+                outlet_id: outletId,
+                nama_outlet: nama,
+                alamat: alamat,
                 area: selectedHomeArea,
                 dso_sub: selectedHomeDso,
                 zona: zona,
-                sektor: document.getElementById('aSektor').value,
+                sektor: sektor,
                 kategori_branding: kat,
-                jenis_outlet: document.getElementById('addJenisOutlet').value,
-                pabrikan: document.getElementById('addPabrikan').value,
-                jenis_branding: kat === 'Retail Branding' ? document.getElementById('addJenisBranding').value : null,
-                brand: kat === 'Venue Branding' ? document.getElementById('addBrand').value : null,
-                menggunakan_ayo_src: document.getElementById('addAyoSrc').value || null,
+                jenis_outlet: jenisOutlet,
+                pabrikan: pabrikan,
+                jenis_branding: jenisBranding,
+                brand: brand,
+                menggunakan_ayo_src: ayoSrc,
                 terikat_kontrak_aktif: document.getElementById('addKontrak').value,
                 status: 'COMPLETE'
             };
@@ -540,7 +594,7 @@
                     loadData();
                 } else { alert('Gagal menyimpan data.'); }
             } catch (e) { console.error(e); }
-            btn.innerHTML = "SUBMIT COMPLETE";
+            btn.innerHTML = "COMPLETE";
         }
 
         // === FUNGSI VALIDASI ===
@@ -550,14 +604,19 @@
             
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('validasiForm').classList.remove('hidden');
-            document.getElementById('valKontrakAktif').value = "";
+            
+            const radios = document.querySelectorAll('input[name="valDataSesuai"]');
+            radios.forEach(r => r.checked = false);
+            
             document.getElementById('valEditArea').classList.add('hidden');
             document.getElementById('btnCompleteVal').classList.add('hidden');
+
+            const highlightText = item.kategori_branding === 'Retail Branding' ? (item.jenis_branding || '-') : (item.brand || '-');
 
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
                 <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
-                <div><strong>View Outlet:</strong> <span style="color:#e65100; font-weight:bold;">${item.view_outlet || '-'}</span></div>
+                <div><strong>Jenis Branding / Brand:</strong> <span style="color:#e65100; font-weight:bold;">${highlightText}</span></div>
                 <div><strong>Outlet ID:</strong> ${item.outlet_id || '-'}</div>
                 <div><strong>Nama Outlet:</strong> ${item.nama_outlet || '-'}</div>
                 <div><strong>Alamat:</strong> ${item.alamat || '-'}</div>
@@ -571,18 +630,23 @@
         }
 
         function toggleValEdit() {
-            const isAktif = document.getElementById('valKontrakAktif').value;
+            const selectedRadio = document.querySelector('input[name="valDataSesuai"]:checked');
+            const val = selectedRadio ? selectedRadio.value : "";
+            
             const editArea = document.getElementById('valEditArea');
             const btn = document.getElementById('btnCompleteVal');
 
-            if (isAktif === 'TIDAK') {
-                editArea.classList.remove('hidden'); btn.classList.remove('hidden');
+            if (val === 'Ada perubahan') {
+                editArea.classList.remove('hidden'); 
+                btn.classList.remove('hidden');
                 document.getElementById('valEditPabrikan').value = '';
                 populateValEditBrand();
-            } else if (isAktif === 'YA') {
-                editArea.classList.add('hidden'); btn.classList.remove('hidden');
+            } else if (val === 'Ya' || val === 'Branding non-aktif') {
+                editArea.classList.add('hidden'); 
+                btn.classList.remove('hidden');
             } else {
-                editArea.classList.add('hidden'); btn.classList.add('hidden');
+                editArea.classList.add('hidden'); 
+                btn.classList.add('hidden');
             }
         }
 
@@ -613,20 +677,46 @@
             }
         }
 
+        // FUNGSI SUBMIT UPDATE DENGAN VALIDASI KETAT
         async function submitValidasi() {
-            const btn = event.target; btn.innerHTML = "Mengupdate...";
-            const isAktif = document.getElementById('valKontrakAktif').value;
-            const kat = selectedOutletData.kategori_branding;
-
-            let payload = { status: 'COMPLETE', terikat_kontrak_aktif: isAktif };
+            const selectedRadio = document.querySelector('input[name="valDataSesuai"]:checked');
+            const isSesuai = selectedRadio ? selectedRadio.value : "";
             
-            if(isAktif === 'TIDAK') {
+            if(!isSesuai) return alert("Silakan pilih opsi validasi!");
+
+            const btn = document.getElementById('btnCompleteVal'); 
+            btn.innerHTML = "Mengupdate...";
+            
+            const kat = selectedOutletData.kategori_branding;
+            let payload = { status: 'COMPLETE', terikat_kontrak_aktif: isSesuai };
+            
+            if(isSesuai === 'Ada perubahan') {
                 payload.pabrikan = document.getElementById('valEditPabrikan').value;
+                if(!payload.pabrikan) {
+                    btn.innerHTML = "COMPLETE";
+                    return alert("Harap pilih Pabrikan!");
+                }
+
                 if(kat === 'Retail Branding') {
                     payload.jenis_branding = document.getElementById('valEditJenisBranding').value;
-                    payload.menggunakan_ayo_src = document.getElementById('valEditAyoSrc').value || null;
+                    if(!payload.jenis_branding) {
+                        btn.innerHTML = "COMPLETE";
+                        return alert("Harap pilih Jenis Branding!");
+                    }
+
+                    if(payload.pabrikan === 'PMI') {
+                        payload.menggunakan_ayo_src = document.getElementById('valEditAyoSrc').value;
+                        if(!payload.menggunakan_ayo_src) {
+                            btn.innerHTML = "COMPLETE";
+                            return alert("Harap lengkapi isian Menggunakan Ayo SRC!");
+                        }
+                    }
                 } else if(kat === 'Venue Branding') {
                     payload.brand = document.getElementById('valEditBrand').value;
+                    if(!payload.brand) {
+                        btn.innerHTML = "COMPLETE";
+                        return alert("Harap pilih Brand!");
+                    }
                 }
             }
 
