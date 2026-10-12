@@ -199,7 +199,6 @@
     </div>
 
     <script>
-        // URL DATABASE DUMMY
         const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb_dummy';
         const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
         const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
@@ -301,14 +300,6 @@
                 "Sub DSO Kolaka": { "Bombana": ["Bambaea", "Boepinang", "Rumbia"], "Kolaka Rural": ["Pomalaa", "Tanggetada"], "Kolaka Timur": ["Ladongi", "Rate-Rate"], "Kolaka Urban": ["Kolaka", "Samaturu"], "Kolaka Utara": ["Lasusua", "Pakue", "Ranteangin"] },
                 "Sub DSO Mamuju": { "Majene": ["Majene", "Malunda", "Sendana"], "Mamasa": ["Mamasa", "Mambi", "Sumarorong"], "Mamuju Rural": ["Tarailu", "Tasiu"], "Mamuju Tengah": ["Karossa", "Topoyo"], "Mamuju Urban": ["Mamuju Kota", "Tapalang"] },
                 "Sub DSO Toraja": { "Enrekang": ["Baraka", "Enrekang", "Sudu"], "Makale": ["Makale", "Sanggalla"], "Rantepao": ["Rantepao", "Sa'dan", "Sanggalangi"], "Rantetayo": ["Rantetayo", "Rembon"] }
-            },
-            "Surabaya Raya": {
-                "DSO Pamekasan": { "Bangkalan Selatan": ["Bangkalan", "Blega", "Burneh", "Galis - Bangkalan", "Kamal", "Kwanyar", "Labang", "Modung", "Socah", "Tanah Merah", "Tragah"], "Bangkalan Utara": ["Arosbaya", "Geger", "Klampis", "Kokop", "Konang", "Sepulu", "Tanjung Bumi"], "Pamekasan Selatan": ["Galis - Pamekasan", "Kadur", "Larangan", "Pademawu", "Palengaan", "Pamekasan", "Proppo", "Tlanakan"], "Pamekasan Utara": ["Batu Marmar", "Pakong", "Pasean", "Pegantenan", "Waru - Pamekasan"], "Sampang Selatan": ["Camplong", "Jrengik", "Omben", "Pangarengan", "Sampang", "Sreseh", "Torjun"], "Sampang Utara": ["Banyuates", "Karang Penang", "Kedungdung", "Ketapang", "Robatal", "Sokobanah", "Tambelangan"], "Sumenep Selatan": ["Arjasa", "Batuan", "Bluto", "Ganding", "Gayam", "Giligenteng", "Guluk Guluk", "Kalianget", "Kangayan", "Kota Sumenep", "Lenteng", "Masalembu", "Nonggunong", "Pragaan", "Raas", "Sapeken", "Saronggi", "Talango"], "Sumenep Utara": ["Ambunten", "Batang Batang", "Batuputih", "Dasuk", "Dungkek", "Gapura", "Manding", "Pasongsongan", "Rubaru"] },
-                "DSO Sidoarjo": { "Sidoarjo Barat": ["Balong Bendo", "Krian", "Prambon", "Tarik", "Wonoayu"], "Sidoarjo Kota": ["Buduran", "Candi", "Sidoarjo"], "Sidoarjo Selatan": ["Jabon", "Krembung", "Porong", "Tanggulangin", "Tulangan"], "Sidoarjo Utara": ["Gedangan", "Sedati", "Sukodono", "Taman"] },
-                "DSO Surabaya Barat": { "Bawean": ["Sangkapura", "Tambak"], "Bubutan": ["Bubutan", "Genteng", "Krembangan", "Pabean Cantian"], "Gresik Selatan": ["Balongpanggang", "Benjeng", "Cerme", "Driyorejo", "Duduksampeyan", "Kedamean", "Menganti", "Wringinanom"], "Gresik Utara": ["Bungah", "Dukun", "Gresik", "Kebomas", "Manyar", "Panceng", "Sidayu", "Ujungpangkah"], "Karangpilang": ["Karangpilang", "Lakarsantri", "Sambikerep", "Wiyung"], "Sawahan": ["Dukuh Pakis", "Sawahan", "Sukomanunggal", "Tegalsari"], "Tandes": ["Asemrowo", "Benowo", "Pakal", "Tandes"] },
-                "DSO Surabaya Timur": { "Kenjeran": ["Bulak", "Kenjeran", "Semampir", "Simokerto"], "Rungkut": ["Gunung Anyar", "Rungkut", "Waru"], "Sukolilo": ["Gubeng", "Mulyorejo", "Sukolilo", "Tambaksari"], "Wonokromo": ["Gayungan", "Jambangan", "Tenggilis Mejoyo", "Wonocolo", "Wonokromo"] },
-                "Sub DSO Lamongan": { "Lamongan Barat": ["Babat", "Kedungpring", "Pucuk", "Sekaran", "Sugio", "Sukodadi"], "Lamongan Selatan": ["Bluluk", "Mantup", "Modo", "Ngimbang", "Sambeng", "Sukorame"], "Lamongan Timur": ["Deket", "Glagah", "Kembangbahu", "Lamongan", "Sarirejo", "Tikung", "Turi"], "Lamongan Utara": ["Brondong", "Kalitengah", "Karang Geneng", "Karangbinangun", "Laren", "Maduran", "Paciran", "Solokuro"] },
-                "Sub DSO Mojokerto": { "Mojokerto Barat": ["Bangsal", "Dlanggu", "Jatirejo", "Kutorejo", "Puri", "Trowulan"], "Mojokerto Kota": ["Kranggan", "Magersari", "Mojoanyar", "Prajurit Kulon", "Sooko"], "Mojokerto Timur": ["Gondang", "Mojosari", "Ngoro", "Pacet", "Pungging", "Trawas"], "Mojokerto Utara": ["Dawar Blandong", "Gedek", "Jetis", "Kemlagi"] }
             }
         };
 
@@ -605,12 +596,9 @@
             document.getElementById('valEditArea').classList.add('hidden');
             document.getElementById('btnCompleteVal').classList.add('hidden');
 
-            const viewOutletStr = getViewOutlet(item.jenis_outlet, item.kategori_branding, item.jenis_branding, item.brand);
-
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
                 <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
-                <div><strong>View Outlet:</strong> <span style="color:#e65100; font-weight:bold;">${viewOutletStr}</span></div>
                 <div><strong>Outlet ID:</strong> ${item.outlet_id || '-'}</div>
                 <div><strong>Nama Outlet:</strong> ${item.nama_outlet || '-'}</div>
                 <div><strong>Alamat:</strong> ${item.alamat || '-'}</div>
