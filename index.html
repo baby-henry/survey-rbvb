@@ -605,8 +605,6 @@
             document.getElementById('valEditArea').classList.add('hidden');
             document.getElementById('btnCompleteVal').classList.add('hidden');
 
-            // View Outlet sudah tidak ditampilkan di rincian ini sesuai request terbaru.
-            
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
                 <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
@@ -637,7 +635,7 @@
                 const pabrikanSaatIni = selectedOutletData.pabrikan || "";
                 
                 allPabrikan.forEach(p => {
-                    if(p !== pabrikanSaatIni) {
+                    if(p !== pabrikanSaatIni || p === 'PMI') {
                         selectPabrikan.innerHTML += `<option value="${p}">${p}</option>`;
                     }
                 });
