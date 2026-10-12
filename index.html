@@ -53,9 +53,7 @@
     <div id="homePage1">
         <div class="card" style="margin-top: 20px; padding: 30px 20px;">
             <div class="home-menu-title">Pilih Area</div>
-            <div id="areaButtonContainer">
-                <!-- Tombol area akan muncul di sini -->
-            </div>
+            <div id="areaButtonContainer"></div>
         </div>
     </div>
 
@@ -174,8 +172,8 @@
             <div class="form-group">
                 <label style="color:#d32f2f; font-size:1rem; margin-bottom:10px;">Data masih sesuai?</label>
                 <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ya" onchange="toggleValEdit()"> Ya</label>
-                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Branding non-aktif" onchange="toggleValEdit()"> Branding non-aktif</label>
-                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ada perubahan" onchange="toggleValEdit()"> Ada perubahan</label>
+                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Sudah non-aktif" onchange="toggleValEdit()"> Sudah non-aktif</label>
+                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ada perubahan pabrikan" onchange="toggleValEdit()"> Ada perubahan pabrikan</label>
             </div>
             
             <div id="valEditArea" class="hidden">
@@ -183,8 +181,7 @@
                 <div class="form-group">
                     <label>Pabrikan (Update)</label>
                     <select id="valEditPabrikan" onchange="populateValEditBrand()">
-                        <option value="">-- Pilih --</option>
-                        <option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
+                        <!-- Pilihan pabrikan akan dimuat dinamis (meng-exclude pabrikan saat ini) -->
                     </select>
                 </div>
                 <div class="form-group hidden" id="valEditJenisBrandGroup"><label>Jenis Branding (Update)</label><select id="valEditJenisBranding"></select></div>
@@ -202,7 +199,7 @@
     </div>
 
     <script>
-        // MENGUBAH URL KE DUMMY
+        // URL DATABASE DUMMY
         const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb_dummy';
         const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
         const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
@@ -228,6 +225,8 @@
                 "PMI": { "jenis_branding": [], "brand": ["A Hijau K", "A Mild", "A Prima K", "A Splash", "A Zetta F", "Dji Sam Soe Kretek", "Dji Sam Soe Magnum Filter F", "Dji Sam Soe Magnum Kretek Gold Wraps K", "Marlboro", "Marlboro Filter Black F"] }
             }
         };
+
+        const allPabrikan = ["PMI", "GG", "KT&G", "Gudang Baru"];
 
         // === MASTER DATA LOKASI ===
         const masterLokasi = {
@@ -312,6 +311,8 @@
                 "Sub DSO Mojokerto": { "Mojokerto Barat": ["Bangsal", "Dlanggu", "Jatirejo", "Kutorejo", "Puri", "Trowulan"], "Mojokerto Kota": ["Kranggan", "Magersari", "Mojoanyar", "Prajurit Kulon", "Sooko"], "Mojokerto Timur": ["Gondang", "Mojosari", "Ngoro", "Pacet", "Pungging", "Trawas"], "Mojokerto Utara": ["Dawar Blandong", "Gedek", "Jetis", "Kemlagi"] }
             }
         };
+
+        window.addEventListener('DOMContentLoaded', () => { initHome(); });
 
         // === FUNGSI HOME PAGE ===
         function initHome() {
@@ -609,13 +610,14 @@
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
                 <div><strong>Jenis Outlet:</strong> ${item.jenis_outlet || '-'}</div>
-                <div><strong>Jenis Branding / Brand:</strong> <span style="color:#e65100; font-weight:bold;">${viewOutletStr}</span></div>
                 <div><strong>Outlet ID:</strong> ${item.outlet_id || '-'}</div>
                 <div><strong>Nama Outlet:</strong> ${item.nama_outlet || '-'}</div>
                 <div><strong>Alamat:</strong> ${item.alamat || '-'}</div>
                 <div><strong>Zona:</strong> ${item.zona || '-'} | <strong>Sektor:</strong> ${item.sektor || '-'}</div>
                 <hr style="border:0.5px solid #ccc; margin:8px 0;">
-                <div><strong>Pabrikan Saat Ini:</strong> ${item.pabrikan || '-'}</div>
+                <div><strong>Pabrikan:</strong> ${item.pabrikan || '-'}</div>
+                ${item.kategori_branding === 'Retail Branding' ? `<div><strong>Jenis Branding:</strong> <span style="color:#e65100; font-weight:bold;">${item.jenis_branding || '-'}</span></div>` : ''}
+                ${item.kategori_branding === 'Venue Branding' ? `<div><strong>Brand:</strong> <span style="color:#e65100; font-weight:bold;">${item.brand || '-'}</span></div>` : ''}
                 ${item.kategori_branding === 'Retail Branding' && item.pabrikan === 'PMI' ? `<div><strong>Menggunakan Ayo SRC?:</strong> ${item.menggunakan_ayo_src || '-'}</div>` : ''}
             `;
         }
@@ -627,11 +629,23 @@
             const editArea = document.getElementById('valEditArea');
             const btn = document.getElementById('btnCompleteVal');
 
-            if (val === 'Ada perubahan') {
+            if (val === 'Ada perubahan pabrikan') {
                 editArea.classList.remove('hidden'); btn.classList.remove('hidden');
                 document.getElementById('valEditPabrikan').value = '';
+                
+                // MENGHILANGKAN PABRIKAN YANG SEDANG AKTIF DARI LIST UPDATE
+                const selectPabrikan = document.getElementById('valEditPabrikan');
+                selectPabrikan.innerHTML = '<option value="">-- Pilih --</option>';
+                const pabrikanSaatIni = selectedOutletData.pabrikan || "";
+                
+                allPabrikan.forEach(p => {
+                    if(p !== pabrikanSaatIni) {
+                        selectPabrikan.innerHTML += `<option value="${p}">${p}</option>`;
+                    }
+                });
+
                 populateValEditBrand();
-            } else if (val === 'Ya' || val === 'Branding non-aktif') {
+            } else if (val === 'Ya' || val === 'Sudah non-aktif') {
                 editArea.classList.add('hidden'); btn.classList.remove('hidden');
             } else {
                 editArea.classList.add('hidden'); btn.classList.add('hidden');
@@ -674,7 +688,7 @@
             const kat = selectedOutletData.kategori_branding;
             let payload = { status: 'COMPLETE', terikat_kontrak_aktif: isSesuai };
             
-            if(isSesuai === 'Ada perubahan') {
+            if(isSesuai === 'Ada perubahan pabrikan') {
                 payload.pabrikan = document.getElementById('valEditPabrikan').value;
                 if(!payload.pabrikan) { btn.innerHTML = "COMPLETE"; return alert("Harap pilih Pabrikan!"); }
 
@@ -696,7 +710,7 @@
                 if(res.ok) {
                     alert('Validasi berhasil! Status berubah menjadi COMPLETE.');
                     backToDashboard(); loadData();
-                } else { alert('Gagal mengupdate data.'); }
+                } else { alert('Gagal mengupdate data. Pastikan kolom terikat_kontrak_aktif (tipe text) sudah ada di Supabase.'); }
             } catch (e) { console.error(e); }
             btn.innerHTML = "COMPLETE";
         }
