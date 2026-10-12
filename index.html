@@ -20,6 +20,7 @@
         .btn-blue { background: #1976d2; color: white; }
         .btn-green { background: #388e3c; color: white; }
         .btn-outline { background: transparent; border: 2px solid #1976d2; color: #1976d2; margin-top: 5px; }
+        .btn-red { background: #d32f2f; color: white; margin-bottom: 15px; }
         
         /* Tombol Khusus Menu Home */
         .btn-menu { width: 100%; padding: 16px; font-weight: bold; border: 1px solid #3949ab; border-radius: 5px; cursor: pointer; margin-bottom: 12px; font-size: 1.1rem; background: #e8eaf6; color: #1a237e; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: background 0.2s; }
@@ -27,7 +28,7 @@
         .btn-back-link { display: block; text-align: center; margin-top: 25px; color: #d32f2f; text-decoration: none; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
         
         .outlet-item { border-left: 4px solid #1976d2; padding: 10px; background: #f9f9f9; margin-bottom: 10px; cursor: pointer; border-radius: 4px; }
-        .outlet-item h4 { margin: 0 0 5px 0; color: #1976d2; }
+        .outlet-item h4 { margin: 0 0 5px 0; color: #1976d2; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
         .outlet-item p { margin: 2px 0; font-size: 0.85rem; color: #555; }
         
         .hidden { display: none !important; }
@@ -85,7 +86,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Status</label>
+                <label>Status Survey</label>
                 <select id="filterStatus" onchange="loadData()">
                     <option value="NOT COMPLETE">NOT COMPLETE</option>
                     <option value="COMPLETE">COMPLETE</option>
@@ -123,16 +124,31 @@
             
             <div id="addDynamicArea" class="hidden">
                 <div class="alert-desc">Pastikan Kontrak Branding masih Aktif !</div>
-                <div class="form-group"><label>Jenis Outlet</label><select id="addJenisOutlet"></select></div>
-                <div class="form-group"><label>Outlet ID</label><input type="text" id="addId"></div>
+                <div class="form-group">
+                    <label>Jenis Outlet <span id="descAddJenisOutlet" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <select id="addJenisOutlet"></select>
+                </div>
+                <div class="form-group">
+                    <label>Outlet ID <span id="descAddId" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <input type="text" id="addId" maxlength="8">
+                </div>
                 <div class="form-group"><label>Nama Outlet</label><input type="text" id="addNama"></div>
-                <div class="form-group"><label>Alamat</label><input type="text" id="addAlamat"></div>
+                
+                <div class="form-group" id="addAlamatGroup">
+                    <label>Alamat</label><input type="text" id="addAlamat">
+                </div>
                 
                 <hr>
                 <div class="form-group"><label>Area</label><input type="text" id="aArea" readonly style="background:#eee;"></div>
                 <div class="form-group"><label>DSO/Sub</label><input type="text" id="aDso" readonly style="background:#eee;"></div>
-                <div class="form-group"><label>Zona</label><select id="aZona" onchange="populateAddSektor()"><option value="">-- Pilih --</option></select></div>
-                <div class="form-group"><label>Sektor</label><select id="aSektor"><option value="">-- Pilih --</option></select></div>
+                <div class="form-group">
+                    <label>Zona <span id="descAddZona" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <select id="aZona" onchange="populateAddSektor()"><option value="">-- Pilih --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Sektor <span id="descAddSektor" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <select id="aSektor"><option value="">-- Pilih --</option></select>
+                </div>
                 <hr>
 
                 <div class="form-group">
@@ -168,12 +184,14 @@
             <h3>Validasi Outlet</h3>
             <div id="infoOutlet" class="info-box"></div>
             
+            <button class="btn btn-red hidden" id="btnDeleteNew" onclick="deleteNewOutlet()">HAPUS OUTLET INI (NEW)</button>
+            
             <hr>
             <div class="form-group">
                 <label style="color:#d32f2f; font-size:1rem; margin-bottom:10px;">Data masih sesuai?</label>
                 <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ya" onchange="toggleValEdit()"> Ya</label>
                 <label class="radio-label"><input type="radio" name="valDataSesuai" value="Sudah non-aktif" onchange="toggleValEdit()"> Sudah non-aktif</label>
-                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ada perubahan pabrikan" onchange="toggleValEdit()"> Ada perubahan pabrikan</label>
+                <label class="radio-label"><input type="radio" name="valDataSesuai" value="Ada perubahan data" onchange="toggleValEdit()"> Ada perubahan data</label>
             </div>
             
             <div id="valEditArea" class="hidden">
@@ -199,7 +217,6 @@
     </div>
 
     <script>
-        // URL DATABASE DUMMY
         const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb_dummy';
         const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
         const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
@@ -444,9 +461,10 @@
                 div.className = 'outlet-item';
                 
                 const viewOutletStr = getViewOutlet(item.jenis_outlet, item.kategori_branding, item.jenis_branding, item.brand);
+                const newBadge = item.is_new ? '<span style="background:#d32f2f; color:white; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-left:8px; vertical-align:middle;">NEW</span>' : '';
                 
                 div.innerHTML = `
-                    <h4><span style="color: #e65100;">${viewOutletStr}</span> | ${item.outlet_id || '-'} | ${item.nama_outlet || '-'}</h4>
+                    <h4><span style="color: #e65100;">${viewOutletStr}</span> | ${item.outlet_id || '-'} | ${item.nama_outlet || '-'}${newBadge}</h4>
                     <p>${item.alamat || '-'}</p>
                     <p>Zona: ${item.zona || '-'} | Sektor: ${item.sektor || '-'}</p>
                 `;
@@ -491,6 +509,12 @@
             const dynamicArea = document.getElementById('addDynamicArea');
             const dJenisOutlet = document.getElementById('addJenisOutlet');
             
+            const descAddId = document.getElementById('descAddId');
+            const descAddJenisOutlet = document.getElementById('descAddJenisOutlet');
+            const descAddZona = document.getElementById('descAddZona');
+            const descAddSektor = document.getElementById('descAddSektor');
+            const addAlamatGroup = document.getElementById('addAlamatGroup');
+
             document.getElementById('addPabrikan').value = '';
             populateAddBrand();
 
@@ -499,9 +523,22 @@
             } else {
                 dynamicArea.classList.remove('hidden');
                 dJenisOutlet.innerHTML = '<option value="">-- Pilih --</option>';
+                
                 if(katBrand === "Retail Branding") {
+                    descAddId.innerText = "(isi 8-digit terakhir sesuai DSCA, wajib CL)";
+                    descAddJenisOutlet.innerText = "(sesuai DSCA)";
+                    descAddZona.innerText = "(sesuai DSCA)";
+                    descAddSektor.innerText = "(sesuai DSCA)";
+                    addAlamatGroup.classList.add('hidden');
+                    
                     listJenisOutletRetail.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
                 } else if(katBrand === "Venue Branding") {
+                    descAddId.innerText = "(jika ada, isi sesuai DSCA; jika tidak, isi -)";
+                    descAddJenisOutlet.innerText = "";
+                    descAddZona.innerText = "";
+                    descAddSektor.innerText = "";
+                    addAlamatGroup.classList.remove('hidden');
+                    
                     listJenisOutletVenue.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
                 }
             }
@@ -537,18 +574,29 @@
         async function submitAddNew() {
             const kat = document.getElementById('addKatBranding').value;
             if(!kat) return alert("Harap pilih Kategori Branding!");
+            
             const jenisOutlet = document.getElementById('addJenisOutlet').value;
             if(!jenisOutlet) return alert("Harap pilih Jenis Outlet!");
+            
             const outletId = document.getElementById('addId').value.trim();
             if(!outletId) return alert("Harap isi Outlet ID!");
+            if(outletId.length > 8) return alert("Outlet ID maksimal 8 karakter!");
+            
             const nama = document.getElementById('addNama').value.trim();
             if(!nama) return alert("Harap isi Nama Outlet!");
-            const alamat = document.getElementById('addAlamat').value.trim();
-            if(!alamat) return alert("Harap isi Alamat Outlet!");
+            
+            let alamat = "-";
+            if (kat === "Venue Branding") {
+                alamat = document.getElementById('addAlamat').value.trim();
+                if(!alamat) return alert("Harap isi Alamat Outlet!");
+            }
+            
             const zona = document.getElementById('aZona').value;
             if(!zona) return alert("Harap pilih Zona!");
+            
             const sektor = document.getElementById('aSektor').value;
             if(!sektor) return alert("Harap pilih Sektor!");
+            
             const pabrikan = document.getElementById('addPabrikan').value;
             if(!pabrikan) return alert("Harap pilih Pabrikan!");
             
@@ -576,7 +624,8 @@
                 kategori_branding: kat, jenis_outlet: jenisOutlet, pabrikan: pabrikan,
                 jenis_branding: jenisBranding, brand: brand, ayo_src: ayoSrc,
                 kontrak_aktif: document.getElementById('addKontrak').value,
-                status: 'COMPLETE'
+                status: 'COMPLETE',
+                is_new: true
             };
 
             try {
@@ -586,9 +635,26 @@
                     document.querySelectorAll('#addForm input:not([readonly]), #addForm select').forEach(i => i.value = ''); 
                     document.getElementById('addAyoSrcGroup').classList.add('hidden');
                     backToDashboard(); loadData();
-                } else { alert('Gagal menyimpan data.'); }
+                } else { alert('Gagal menyimpan data. Pastikan kolom is_new sudah ditambahkan di Supabase!'); }
             } catch (e) { console.error(e); }
             btn.innerHTML = "COMPLETE";
+        }
+
+        // === FUNGSI DELETE OUTLET BARU ===
+        async function deleteNewOutlet() {
+            if(!confirm("Yakin ingin menghapus outlet ini? Data yang dihapus tidak dapat dikembalikan.")) return;
+            const btn = document.getElementById('btnDeleteNew');
+            btn.innerHTML = "Menghapus...";
+            try {
+                const res = await fetch(`${SUPABASE_URL}?id=eq.${selectedOutletData.id}`, { method: 'DELETE', headers: HEADERS });
+                if(res.ok) {
+                    alert("Outlet berhasil dihapus.");
+                    backToDashboard(); loadData();
+                } else {
+                    alert("Gagal menghapus outlet.");
+                }
+            } catch(e) { console.error(e); alert("Terjadi kesalahan jaringan."); }
+            btn.innerHTML = "HAPUS OUTLET INI (NEW)";
         }
 
         // === FUNGSI VALIDASI ===
@@ -604,6 +670,12 @@
             
             document.getElementById('valEditArea').classList.add('hidden');
             document.getElementById('btnCompleteVal').classList.add('hidden');
+
+            if(item.is_new) {
+                document.getElementById('btnDeleteNew').classList.remove('hidden');
+            } else {
+                document.getElementById('btnDeleteNew').classList.add('hidden');
+            }
 
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
@@ -627,7 +699,7 @@
             const editArea = document.getElementById('valEditArea');
             const btn = document.getElementById('btnCompleteVal');
 
-            if (val === 'Ada perubahan pabrikan') {
+            if (val === 'Ada perubahan data') {
                 editArea.classList.remove('hidden'); btn.classList.remove('hidden');
                 
                 const selectPabrikan = document.getElementById('valEditPabrikan');
@@ -635,8 +707,12 @@
                 const pabrikanSaatIni = selectedOutletData.pabrikan || "";
                 
                 allPabrikan.forEach(p => {
-                    if(p !== pabrikanSaatIni || p === 'PMI') {
+                    if(selectedOutletData.kategori_branding === 'Venue Branding') {
                         selectPabrikan.innerHTML += `<option value="${p}">${p}</option>`;
+                    } else {
+                        if(p !== pabrikanSaatIni || p === 'PMI') {
+                            selectPabrikan.innerHTML += `<option value="${p}">${p}</option>`;
+                        }
                     }
                 });
 
@@ -685,7 +761,7 @@
             
             let payload = { status: 'COMPLETE', kontrak_aktif: isSesuai };
             
-            if(isSesuai === 'Ada perubahan pabrikan') {
+            if(isSesuai === 'Ada perubahan data') {
                 payload.pabrikan = document.getElementById('valEditPabrikan').value;
                 if(!payload.pabrikan) { btn.innerHTML = "COMPLETE"; return alert("Harap pilih Pabrikan!"); }
 
