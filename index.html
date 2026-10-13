@@ -332,15 +332,47 @@
 
         window.addEventListener('DOMContentLoaded', () => { initHome(); });
 
+      // === MAPPING KODE REF DSO (10 DIGIT) ===
+        const dsoMapping = {"BOJONE1043":{"area":"Brawijaya","dso":"DSO Bojonegoro"},"JOMBAN3218":{"area":"Brawijaya","dso":"DSO Jombang"},"MADIUN1960":{"area":"Brawijaya","dso":"DSO Madiun"},"TULUNG0133":{"area":"Brawijaya","dso":"DSO Tulungagung"},"BLITAR8908":{"area":"Brawijaya","dso":"Sub DSO Blitar"},"KEDIRI3863":{"area":"Brawijaya","dso":"Sub DSO Kediri"},"PONORO7940":{"area":"Brawijaya","dso":"Sub DSO Ponorogo"},"TUBAN26542":{"area":"Brawijaya","dso":"Sub DSO Tuban"},"GORONT3511":{"area":"Maesa Jaya","dso":"DSO Gorontalo"},"JAYAPU6155":{"area":"Maesa Jaya","dso":"DSO Jayapura"},"MANADO9407":{"area":"Maesa Jaya","dso":"DSO Manado"},"PALU816184":{"area":"Maesa Jaya","dso":"DSO Palu"},"AMURAN9593":{"area":"Maesa Jaya","dso":"Sub DSO Amurang"},"KOTAMO1034":{"area":"Maesa Jaya","dso":"Sub DSO Kotamobagu"},"MANOKW1316":{"area":"Maesa Jaya","dso":"Sub DSO Manokwari"},"MARISA4752":{"area":"Maesa Jaya","dso":"Sub DSO Marisa"},"MERAUK5534":{"area":"Maesa Jaya","dso":"Sub DSO Merauke"},"MOROWA1928":{"area":"Maesa Jaya","dso":"Sub DSO Morowali"},"SOFIFI3276":{"area":"Maesa Jaya","dso":"Sub DSO Sofifi"},"SORONG4835":{"area":"Maesa Jaya","dso":"Sub DSO Sorong"},"TERNAT0305":{"area":"Maesa Jaya","dso":"Sub DSO Ternate"},"TOLITO6413":{"area":"Maesa Jaya","dso":"Sub DSO Tolitoli"},"BANYUW9537":{"area":"Mahameru","dso":"DSO Banyuwangi"},"JEMBER6724":{"area":"Mahameru","dso":"DSO Jember"},"MALANG2388":{"area":"Mahameru","dso":"DSO Malang"},"PROBOL4969":{"area":"Mahameru","dso":"DSO Probolinggo"},"KEPANJ6532":{"area":"Mahameru","dso":"Sub DSO Kepanjen"},"LUMAJA8710":{"area":"Mahameru","dso":"Sub DSO Lumajang"},"PASURU1226":{"area":"Mahameru","dso":"Sub DSO Pasuruan"},"SITUBO9166":{"area":"Mahameru","dso":"Sub DSO Situbondo"},"BANJAR9784":{"area":"Mulawarman","dso":"DSO Banjarmasin"},"PALANG8018":{"area":"Mulawarman","dso":"DSO Palangkaraya"},"SAMARI4514":{"area":"Mulawarman","dso":"DSO Samarinda"},"BALIKP6270":{"area":"Mulawarman","dso":"Sub DSO Balikpapan"},"BARABA4828":{"area":"Mulawarman","dso":"Sub DSO Barabai"},"BATULI1489":{"area":"Mulawarman","dso":"Sub DSO Batulicin"},"MUARAT3252":{"area":"Mulawarman","dso":"Sub DSO Muara Teweh"},"PANGKA8809":{"area":"Mulawarman","dso":"Sub DSO Pangkalan Bun"},"SANGAT5701":{"area":"Mulawarman","dso":"Sub DSO Sangatta"},"SAMPIT5430":{"area":"Mulawarman","dso":"Sub DSO Sampit"},"TANAHG3911":{"area":"Mulawarman","dso":"Sub DSO Tanah Grogot"},"AMBON71822":{"area":"Nusa Seribu","dso":"DSO Ambon"},"DENPAS7824":{"area":"Nusa Seribu","dso":"DSO Denpasar"},"KUPANG8963":{"area":"Nusa Seribu","dso":"DSO Kupang"},"MATARA8346":{"area":"Nusa Seribu","dso":"DSO Mataram"},"KLUNGK5787":{"area":"Nusa Seribu","dso":"Sub DSO Klungkung"},"MAUMER1331":{"area":"Nusa Seribu","dso":"Sub DSO Maumere"},"RUTENG5098":{"area":"Nusa Seribu","dso":"Sub DSO Ruteng"},"SINGAR3930":{"area":"Nusa Seribu","dso":"Sub DSO Singaraja"},"SUMBAW1031":{"area":"Nusa Seribu","dso":"Sub DSO Sumbawa Besar"},"KENDAR0518":{"area":"Phinisi","dso":"DSO Kendari"},"MAKASS3473":{"area":"Phinisi","dso":"DSO Makassar"},"PALOPO8299":{"area":"Phinisi","dso":"DSO Palopo"},"PAREPA7376":{"area":"Phinisi","dso":"DSO Parepare"},"WATAMP3116":{"area":"Phinisi","dso":"DSO Watampone"},"BAUBAU5667":{"area":"Phinisi","dso":"Sub DSO Baubau"},"BULUKU0106":{"area":"Phinisi","dso":"Sub DSO Bulukumba"},"KOLAKA5133":{"area":"Phinisi","dso":"Sub DSO Kolaka"},"MAMUJU3872":{"area":"Phinisi","dso":"Sub DSO Mamuju"},"TORAJA6247":{"area":"Phinisi","dso":"Sub DSO Toraja"},"PAMEKA3178":{"area":"Surabaya Raya","dso":"DSO Pamekasan"},"SIDOAR1080":{"area":"Surabaya Raya","dso":"DSO Sidoarjo"},"SURABA1326":{"area":"Surabaya Raya","dso":"DSO Surabaya Barat"},"SURABA7736":{"area":"Surabaya Raya","dso":"DSO Surabaya Timur"},"LAMONG0260":{"area":"Surabaya Raya","dso":"Sub DSO Lamongan"},"MOJOKE6474":{"area":"Surabaya Raya","dso":"Sub DSO Mojokerto"}};
+
         // === FUNGSI HOME PAGE ===
         function initHome() {
-            const areaContainer = document.getElementById('areaButtonContainer');
-            if(!areaContainer) return;
-            areaContainer.innerHTML = '';
-            for (let area in masterLokasi) {
-                const btn = document.createElement('button');
-                btn.className = 'btn-menu'; btn.innerText = area; btn.onclick = () => selectArea(area);
-                areaContainer.appendChild(btn);
+            // Mengecek paramater ref di URL (contoh: ?ref=BOJONE1043)
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramRef = urlParams.get('ref');
+
+            if (paramRef && dsoMapping[paramRef]) {
+                // JIKA MENGGUNAKAN LINK KHUSUS DSO
+                selectedHomeArea = dsoMapping[paramRef].area;
+                selectedHomeDso = dsoMapping[paramRef].dso;
+                
+                document.getElementById('homePage1').classList.add('hidden');
+                document.getElementById('homePage2').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
+                
+                document.getElementById('displayLokasi').innerText = `${selectedHomeArea} ➔ ${selectedHomeDso}`;
+                
+                // Menghilangkan tombol 'Ganti' agar tidak bisa diubah oleh surveyor
+                const btnGanti = document.querySelector('.info-bar button');
+                if(btnGanti) btnGanti.classList.add('hidden');
+
+                const fZona = document.getElementById('fZona');
+                fZona.innerHTML = '<option value="ALL">ALL</option>';
+                for (let zona in masterLokasi[selectedHomeArea][selectedHomeDso]) {
+                    fZona.innerHTML += `<option value="${zona}">${zona}</option>`;
+                }
+                populateMainSektor();
+
+            } else {
+                // JIKA LINK BIASA / TIDAK ADA REF (Mode Koordinator/Bebas)
+                const areaContainer = document.getElementById('areaButtonContainer');
+                if(!areaContainer) return;
+                areaContainer.innerHTML = '';
+                for (let area in masterLokasi) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-menu'; btn.innerText = area; btn.onclick = () => selectArea(area);
+                    areaContainer.appendChild(btn);
+                }
             }
         }
 
