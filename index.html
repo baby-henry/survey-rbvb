@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retail & Venue Branding Survey</title>
+    <!-- MENGIMPOR SUPABASE SDK UNTUK SISTEM LOGIN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* MENCEGAH PULL-TO-REFRESH DI SMARTPHONE */
         html, body { overscroll-behavior-y: none; }
@@ -178,6 +180,76 @@
         </div>
     </div>
 
+    <!-- FORM EDIT NEW (KHUSUS is_new == true) -->
+    <div id="editNewForm" class="hidden">
+        <div class="card">
+            <h3>Edit Data Outlet (NEW)</h3>
+            <div class="form-group">
+                <label>Kategori Branding</label>
+                <select id="eKatBranding" onchange="updateEditFormDisplay()">
+                    <option value="">-- Pilih --</option>
+                    <option value="Retail Branding">Retail Branding</option>
+                    <option value="Venue Branding">Venue Branding</option>
+                </select>
+            </div>
+            
+            <div id="eDynamicArea" class="hidden">
+                <div class="alert-desc">Pastikan Kontrak Branding masih Aktif !</div>
+                <div class="form-group">
+                    <label>Jenis Outlet <span id="descEJenisOutlet" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <select id="eJenisOutlet"></select>
+                </div>
+                <div class="form-group">
+                    <label>Outlet ID <span id="descEId" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <input type="text" id="eId" maxlength="8">
+                </div>
+                <div class="form-group"><label>Nama Outlet</label><input type="text" id="eNama"></div>
+                
+                <div class="form-group" id="eAlamatGroup">
+                    <label>Alamat</label><input type="text" id="eAlamat">
+                </div>
+                
+                <hr>
+                <div class="form-group"><label>Area</label><input type="text" id="eAreaLokasi" readonly style="background:#eee;"></div>
+                <div class="form-group"><label>DSO/Sub</label><input type="text" id="eDsoLokasi" readonly style="background:#eee;"></div>
+                <div class="form-group">
+                    <label>Zona <span id="descEZona" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <select id="eZonaLokasi" onchange="populateEditSektor()"><option value="">-- Pilih --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Sektor <span id="descESektor" style="font-weight:normal; font-size:0.8rem; color:#666;"></span></label>
+                    <select id="eSektorLokasi"><option value="">-- Pilih --</option></select>
+                </div>
+                <hr>
+
+                <div class="form-group">
+                    <label>Pabrikan</label>
+                    <select id="ePabrikan" onchange="populateEditBrand()">
+                        <option value="">-- Pilih --</option>
+                        <option value="PMI">PMI</option><option value="GG">GG</option><option value="KT&G">KT&G</option><option value="Gudang Baru">Gudang Baru</option>
+                    </select>
+                </div>
+                
+                <div class="form-group hidden" id="eJenisBrandGroup"><label>Jenis Branding</label><select id="eJenisBranding"><option value="">-- Pilih Pabrikan --</option></select></div>
+                <div class="form-group hidden" id="eBrandGroup"><label>Brand</label><select id="eBrand"><option value="">-- Pilih Pabrikan --</option></select></div>
+                
+                <div class="form-group hidden" id="eAyoSrcGroup">
+                    <label>Menggunakan Ayo SRC?</label>
+                    <select id="eAyoSrc"><option value="">-- Pilih --</option><option value="YA">YA</option><option value="TIDAK">TIDAK</option></select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Kontrak Branding masih Aktif?</label>
+                    <input type="text" id="eKontrak" value="YA" readonly>
+                </div>
+
+                <button class="btn btn-green" onclick="submitEditNew()">UPDATE COMPLETE</button>
+                <button class="btn btn-red" onclick="deleteNewOutlet()">HAPUS NEW OUTLET INI ?</button>
+                <button class="btn btn-outline" onclick="backToDashboard()">Kembali</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FORM VALIDASI (KLIK DARI LIST) -->
     <div id="validasiForm" class="hidden">
         <div class="card">
@@ -218,7 +290,7 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb';
+        const SUPABASE_URL = 'https://dfuzakgmfinkgobwunyt.supabase.co/rest/v1/survey_rbvb_dummy';
         const SUPABASE_KEY = 'sb_publishable_5A5pxPCQyrK6VXC5Gb-qVQ_z4jeHfa_'; 
         const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
@@ -332,47 +404,15 @@
 
         window.addEventListener('DOMContentLoaded', () => { initHome(); });
 
-      // === MAPPING KODE REF DSO (10 DIGIT) ===
-        const dsoMapping = {"BOJONE1043":{"area":"Brawijaya","dso":"DSO Bojonegoro"},"JOMBAN3218":{"area":"Brawijaya","dso":"DSO Jombang"},"MADIUN1960":{"area":"Brawijaya","dso":"DSO Madiun"},"TULUNG0133":{"area":"Brawijaya","dso":"DSO Tulungagung"},"BLITAR8908":{"area":"Brawijaya","dso":"Sub DSO Blitar"},"KEDIRI3863":{"area":"Brawijaya","dso":"Sub DSO Kediri"},"PONORO7940":{"area":"Brawijaya","dso":"Sub DSO Ponorogo"},"TUBAN26542":{"area":"Brawijaya","dso":"Sub DSO Tuban"},"GORONT3511":{"area":"Maesa Jaya","dso":"DSO Gorontalo"},"JAYAPU6155":{"area":"Maesa Jaya","dso":"DSO Jayapura"},"MANADO9407":{"area":"Maesa Jaya","dso":"DSO Manado"},"PALU816184":{"area":"Maesa Jaya","dso":"DSO Palu"},"AMURAN9593":{"area":"Maesa Jaya","dso":"Sub DSO Amurang"},"KOTAMO1034":{"area":"Maesa Jaya","dso":"Sub DSO Kotamobagu"},"MANOKW1316":{"area":"Maesa Jaya","dso":"Sub DSO Manokwari"},"MARISA4752":{"area":"Maesa Jaya","dso":"Sub DSO Marisa"},"MERAUK5534":{"area":"Maesa Jaya","dso":"Sub DSO Merauke"},"MOROWA1928":{"area":"Maesa Jaya","dso":"Sub DSO Morowali"},"SOFIFI3276":{"area":"Maesa Jaya","dso":"Sub DSO Sofifi"},"SORONG4835":{"area":"Maesa Jaya","dso":"Sub DSO Sorong"},"TERNAT0305":{"area":"Maesa Jaya","dso":"Sub DSO Ternate"},"TOLITO6413":{"area":"Maesa Jaya","dso":"Sub DSO Tolitoli"},"BANYUW9537":{"area":"Mahameru","dso":"DSO Banyuwangi"},"JEMBER6724":{"area":"Mahameru","dso":"DSO Jember"},"MALANG2388":{"area":"Mahameru","dso":"DSO Malang"},"PROBOL4969":{"area":"Mahameru","dso":"DSO Probolinggo"},"KEPANJ6532":{"area":"Mahameru","dso":"Sub DSO Kepanjen"},"LUMAJA8710":{"area":"Mahameru","dso":"Sub DSO Lumajang"},"PASURU1226":{"area":"Mahameru","dso":"Sub DSO Pasuruan"},"SITUBO9166":{"area":"Mahameru","dso":"Sub DSO Situbondo"},"BANJAR9784":{"area":"Mulawarman","dso":"DSO Banjarmasin"},"PALANG8018":{"area":"Mulawarman","dso":"DSO Palangkaraya"},"SAMARI4514":{"area":"Mulawarman","dso":"DSO Samarinda"},"BALIKP6270":{"area":"Mulawarman","dso":"Sub DSO Balikpapan"},"BARABA4828":{"area":"Mulawarman","dso":"Sub DSO Barabai"},"BATULI1489":{"area":"Mulawarman","dso":"Sub DSO Batulicin"},"MUARAT3252":{"area":"Mulawarman","dso":"Sub DSO Muara Teweh"},"PANGKA8809":{"area":"Mulawarman","dso":"Sub DSO Pangkalan Bun"},"SANGAT5701":{"area":"Mulawarman","dso":"Sub DSO Sangatta"},"SAMPIT5430":{"area":"Mulawarman","dso":"Sub DSO Sampit"},"TANAHG3911":{"area":"Mulawarman","dso":"Sub DSO Tanah Grogot"},"AMBON71822":{"area":"Nusa Seribu","dso":"DSO Ambon"},"DENPAS7824":{"area":"Nusa Seribu","dso":"DSO Denpasar"},"KUPANG8963":{"area":"Nusa Seribu","dso":"DSO Kupang"},"MATARA8346":{"area":"Nusa Seribu","dso":"DSO Mataram"},"KLUNGK5787":{"area":"Nusa Seribu","dso":"Sub DSO Klungkung"},"MAUMER1331":{"area":"Nusa Seribu","dso":"Sub DSO Maumere"},"RUTENG5098":{"area":"Nusa Seribu","dso":"Sub DSO Ruteng"},"SINGAR3930":{"area":"Nusa Seribu","dso":"Sub DSO Singaraja"},"SUMBAW1031":{"area":"Nusa Seribu","dso":"Sub DSO Sumbawa Besar"},"KENDAR0518":{"area":"Phinisi","dso":"DSO Kendari"},"MAKASS3473":{"area":"Phinisi","dso":"DSO Makassar"},"PALOPO8299":{"area":"Phinisi","dso":"DSO Palopo"},"PAREPA7376":{"area":"Phinisi","dso":"DSO Parepare"},"WATAMP3116":{"area":"Phinisi","dso":"DSO Watampone"},"BAUBAU5667":{"area":"Phinisi","dso":"Sub DSO Baubau"},"BULUKU0106":{"area":"Phinisi","dso":"Sub DSO Bulukumba"},"KOLAKA5133":{"area":"Phinisi","dso":"Sub DSO Kolaka"},"MAMUJU3872":{"area":"Phinisi","dso":"Sub DSO Mamuju"},"TORAJA6247":{"area":"Phinisi","dso":"Sub DSO Toraja"},"PAMEKA3178":{"area":"Surabaya Raya","dso":"DSO Pamekasan"},"SIDOAR1080":{"area":"Surabaya Raya","dso":"DSO Sidoarjo"},"SURABA1326":{"area":"Surabaya Raya","dso":"DSO Surabaya Barat"},"SURABA7736":{"area":"Surabaya Raya","dso":"DSO Surabaya Timur"},"LAMONG0260":{"area":"Surabaya Raya","dso":"Sub DSO Lamongan"},"MOJOKE6474":{"area":"Surabaya Raya","dso":"Sub DSO Mojokerto"}};
-
         // === FUNGSI HOME PAGE ===
         function initHome() {
-            // Mengecek paramater ref di URL (contoh: ?ref=BOJONE1043)
-            const urlParams = new URLSearchParams(window.location.search);
-            const paramRef = urlParams.get('ref');
-
-            if (paramRef && dsoMapping[paramRef]) {
-                // JIKA MENGGUNAKAN LINK KHUSUS DSO
-                selectedHomeArea = dsoMapping[paramRef].area;
-                selectedHomeDso = dsoMapping[paramRef].dso;
-                
-                document.getElementById('homePage1').classList.add('hidden');
-                document.getElementById('homePage2').classList.add('hidden');
-                document.getElementById('mainDashboard').classList.remove('hidden');
-                
-                document.getElementById('displayLokasi').innerText = `${selectedHomeArea} ➔ ${selectedHomeDso}`;
-                
-                // Menghilangkan tombol 'Ganti' agar tidak bisa diubah oleh surveyor
-                const btnGanti = document.querySelector('.info-bar button');
-                if(btnGanti) btnGanti.classList.add('hidden');
-
-                const fZona = document.getElementById('fZona');
-                fZona.innerHTML = '<option value="ALL">ALL</option>';
-                for (let zona in masterLokasi[selectedHomeArea][selectedHomeDso]) {
-                    fZona.innerHTML += `<option value="${zona}">${zona}</option>`;
-                }
-                populateMainSektor();
-
-            } else {
-                // JIKA LINK BIASA / TIDAK ADA REF (Mode Koordinator/Bebas)
-                const areaContainer = document.getElementById('areaButtonContainer');
-                if(!areaContainer) return;
-                areaContainer.innerHTML = '';
-                for (let area in masterLokasi) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn-menu'; btn.innerText = area; btn.onclick = () => selectArea(area);
-                    areaContainer.appendChild(btn);
-                }
+            const areaContainer = document.getElementById('areaButtonContainer');
+            if(!areaContainer) return;
+            areaContainer.innerHTML = '';
+            for (let area in masterLokasi) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-menu'; btn.innerText = area; btn.onclick = () => selectArea(area);
+                areaContainer.appendChild(btn);
             }
         }
 
@@ -410,6 +450,7 @@
         function backToHome() {
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('addForm').classList.add('hidden');
+            document.getElementById('editNewForm').classList.add('hidden');
             document.getElementById('validasiForm').classList.add('hidden');
             document.getElementById('homePage1').classList.remove('hidden');
         }
@@ -566,7 +607,7 @@
                     
                     listJenisOutletRetail.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
                 } else if(katBrand === "Venue Branding") {
-                    descAddId.innerText = "(jika ada, isi 8-digit terakhir sesuai DSCA; jika tidak, isi -)";
+                    descAddId.innerText = "(jika ada, isi sesuai DSCA; jika tidak, isi -)";
                     descAddJenisOutlet.innerText = "";
                     descAddZona.innerText = "";
                     descAddSektor.innerText = "";
@@ -673,10 +714,257 @@
             btn.innerHTML = "COMPLETE";
         }
 
+
+        // === FUNGSI EDIT NEW OUTLET ===
+        function showEditNewForm(item) {
+            selectedOutletData = item;
+            selectedOutletId = item.outlet_id;
+            
+            document.getElementById('mainDashboard').classList.add('hidden');
+            document.getElementById('editNewForm').classList.remove('hidden');
+            
+            document.getElementById('eAreaLokasi').value = item.area;
+            document.getElementById('eDsoLokasi').value = item.dso_sub;
+            
+            const eZona = document.getElementById('eZonaLokasi');
+            eZona.innerHTML = '<option value="">-- Pilih --</option>';
+            if(masterLokasi[item.area] && masterLokasi[item.area][item.dso_sub]) {
+                for (let z in masterLokasi[item.area][item.dso_sub]) {
+                    eZona.innerHTML += `<option value="${z}">${z}</option>`;
+                }
+            }
+            eZona.value = item.zona || "";
+            populateEditSektor();
+            document.getElementById('eSektorLokasi').value = item.sektor || "";
+
+            document.getElementById('eKatBranding').value = item.kategori_branding || "";
+            updateEditFormDisplayInit(item);
+        }
+
+        function populateEditSektor() {
+            const zona = document.getElementById('eZonaLokasi').value;
+            const aSektor = document.getElementById('eSektorLokasi');
+            aSektor.innerHTML = '<option value="">-- Pilih --</option>';
+            if (zona !== "" && masterLokasi[selectedHomeArea][selectedHomeDso][zona]) {
+                masterLokasi[selectedHomeArea][selectedHomeDso][zona].forEach(sektor => { 
+                    aSektor.innerHTML += `<option value="${sektor}">${sektor}</option>`; 
+                });
+            }
+        }
+
+        // Init untuk meload data bawaan tanpa menghapus value
+        function updateEditFormDisplayInit(item) {
+            const katBrand = document.getElementById('eKatBranding').value;
+            const dynamicArea = document.getElementById('eDynamicArea');
+            const dJenisOutlet = document.getElementById('eJenisOutlet');
+            
+            const descAddId = document.getElementById('descEId');
+            const descAddJenisOutlet = document.getElementById('descEJenisOutlet');
+            const descAddZona = document.getElementById('descEZona');
+            const descAddSektor = document.getElementById('descESektor');
+            const addAlamatGroup = document.getElementById('eAlamatGroup');
+
+            if(katBrand === "") {
+                dynamicArea.classList.add('hidden');
+                return;
+            } 
+            
+            dynamicArea.classList.remove('hidden');
+            dJenisOutlet.innerHTML = '<option value="">-- Pilih --</option>';
+            
+            if(katBrand === "Retail Branding") {
+                descAddId.innerText = "(isi 8-digit terakhir sesuai DSCA, wajib CL)";
+                descAddJenisOutlet.innerText = "(sesuai DSCA)";
+                descAddZona.innerText = "(sesuai DSCA)";
+                descAddSektor.innerText = "(sesuai DSCA)";
+                addAlamatGroup.classList.add('hidden');
+                listJenisOutletRetail.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
+            } else if(katBrand === "Venue Branding") {
+                descAddId.innerText = "(jika ada, isi sesuai DSCA; jika tidak, isi -)";
+                descAddJenisOutlet.innerText = "";
+                descAddZona.innerText = "";
+                descAddSektor.innerText = "";
+                addAlamatGroup.classList.remove('hidden');
+                listJenisOutletVenue.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
+            }
+
+            dJenisOutlet.value = item.jenis_outlet || "";
+            document.getElementById('eId').value = item.outlet_id || "";
+            document.getElementById('eNama').value = item.nama_outlet || "";
+            document.getElementById('eAlamat').value = item.alamat || "";
+            document.getElementById('ePabrikan').value = item.pabrikan || "";
+            
+            populateEditBrandInit(item);
+        }
+
+        function populateEditBrandInit(item) {
+            const kat = document.getElementById('eKatBranding').value;
+            const pab = document.getElementById('ePabrikan').value;
+            
+            const groupJB = document.getElementById('eJenisBrandGroup');
+            const elJB = document.getElementById('eJenisBranding');
+            const groupBr = document.getElementById('eBrandGroup');
+            const elBr = document.getElementById('eBrand');
+            const ayoGroup = document.getElementById('eAyoSrcGroup');
+            
+            groupJB.classList.add('hidden'); groupBr.classList.add('hidden'); ayoGroup.classList.add('hidden');
+            elJB.innerHTML = '<option value="">-- Pilih --</option>';
+            elBr.innerHTML = '<option value="">-- Pilih --</option>';
+            document.getElementById('eAyoSrc').value = '';
+
+            if(kat && pab && masterBrand[kat] && masterBrand[kat][pab]) {
+                if(kat === 'Retail Branding') {
+                    groupJB.classList.remove('hidden');
+                    masterBrand[kat][pab].jenis_branding.forEach(o => elJB.innerHTML += `<option value="${o}">${o}</option>`);
+                    elJB.value = item.jenis_branding || "";
+                    if(pab === 'PMI') {
+                        ayoGroup.classList.remove('hidden');
+                        document.getElementById('eAyoSrc').value = item.ayo_src || "";
+                    }
+                } else if(kat === 'Venue Branding') {
+                    groupBr.classList.remove('hidden');
+                    masterBrand[kat][pab].brand.forEach(o => elBr.innerHTML += `<option value="${o}">${o}</option>`);
+                    elBr.value = item.brand || "";
+                }
+            }
+        }
+
+        // Ketika User mengganti Kategori/Pabrikan secara manual saat ngedit
+        function updateEditFormDisplay() {
+            const katBrand = document.getElementById('eKatBranding').value;
+            const dynamicArea = document.getElementById('eDynamicArea');
+            const dJenisOutlet = document.getElementById('eJenisOutlet');
+            
+            const descAddId = document.getElementById('descEId');
+            const descAddJenisOutlet = document.getElementById('descEJenisOutlet');
+            const descAddZona = document.getElementById('descEZona');
+            const descAddSektor = document.getElementById('descESektor');
+            const addAlamatGroup = document.getElementById('eAlamatGroup');
+
+            document.getElementById('ePabrikan').value = '';
+            populateEditBrand();
+
+            if(katBrand === "") {
+                dynamicArea.classList.add('hidden');
+            } else {
+                dynamicArea.classList.remove('hidden');
+                dJenisOutlet.innerHTML = '<option value="">-- Pilih --</option>';
+                
+                if(katBrand === "Retail Branding") {
+                    descAddId.innerText = "(isi 8-digit terakhir sesuai DSCA, wajib CL)";
+                    descAddJenisOutlet.innerText = "(sesuai DSCA)";
+                    descAddZona.innerText = "(sesuai DSCA)";
+                    descAddSektor.innerText = "(sesuai DSCA)";
+                    addAlamatGroup.classList.add('hidden');
+                    listJenisOutletRetail.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
+                } else if(katBrand === "Venue Branding") {
+                    descAddId.innerText = "(jika ada, isi sesuai DSCA; jika tidak, isi -)";
+                    descAddJenisOutlet.innerText = "";
+                    descAddZona.innerText = "";
+                    descAddSektor.innerText = "";
+                    addAlamatGroup.classList.remove('hidden');
+                    listJenisOutletVenue.forEach(o => dJenisOutlet.innerHTML += `<option value="${o}">${o}</option>`);
+                }
+            }
+        }
+
+        function populateEditBrand() {
+            const kat = document.getElementById('eKatBranding').value;
+            const pab = document.getElementById('ePabrikan').value;
+            
+            const groupJB = document.getElementById('eJenisBrandGroup');
+            const elJB = document.getElementById('eJenisBranding');
+            const groupBr = document.getElementById('eBrandGroup');
+            const elBr = document.getElementById('eBrand');
+            const ayoGroup = document.getElementById('eAyoSrcGroup');
+            
+            groupJB.classList.add('hidden'); groupBr.classList.add('hidden'); ayoGroup.classList.add('hidden');
+            elJB.innerHTML = '<option value="">-- Pilih --</option>';
+            elBr.innerHTML = '<option value="">-- Pilih --</option>';
+            document.getElementById('eAyoSrc').value = '';
+
+            if(kat && pab && masterBrand[kat] && masterBrand[kat][pab]) {
+                if(kat === 'Retail Branding') {
+                    groupJB.classList.remove('hidden');
+                    masterBrand[kat][pab].jenis_branding.forEach(o => elJB.innerHTML += `<option value="${o}">${o}</option>`);
+                    if(pab === 'PMI') ayoGroup.classList.remove('hidden');
+                } else if(kat === 'Venue Branding') {
+                    groupBr.classList.remove('hidden');
+                    masterBrand[kat][pab].brand.forEach(o => elBr.innerHTML += `<option value="${o}">${o}</option>`);
+                }
+            }
+        }
+
+        async function submitEditNew() {
+            const kat = document.getElementById('eKatBranding').value;
+            if(!kat) return alert("Harap pilih Kategori Branding!");
+            
+            const jenisOutlet = document.getElementById('eJenisOutlet').value;
+            if(!jenisOutlet) return alert("Harap pilih Jenis Outlet!");
+            
+            const outletId = document.getElementById('eId').value.trim();
+            if(!outletId) return alert("Harap isi Outlet ID!");
+            if(outletId.length > 8) return alert("Outlet ID maksimal 8 karakter!");
+            
+            const nama = document.getElementById('eNama').value.trim();
+            if(!nama) return alert("Harap isi Nama Outlet!");
+            
+            let alamat = "-";
+            if (kat === "Venue Branding") {
+                alamat = document.getElementById('eAlamat').value.trim();
+                if(!alamat) return alert("Harap isi Alamat Outlet!");
+            }
+            
+            const zona = document.getElementById('eZonaLokasi').value;
+            if(!zona) return alert("Harap pilih Zona!");
+            
+            const sektor = document.getElementById('eSektorLokasi').value;
+            if(!sektor) return alert("Harap pilih Sektor!");
+            
+            const pabrikan = document.getElementById('ePabrikan').value;
+            if(!pabrikan) return alert("Harap pilih Pabrikan!");
+            
+            let jenisBranding = null;
+            let brand = null;
+            let ayoSrc = null;
+
+            if (kat === 'Retail Branding') {
+                jenisBranding = document.getElementById('eJenisBranding').value;
+                if(!jenisBranding) return alert("Harap pilih Jenis Branding!");
+                if (pabrikan === 'PMI') {
+                    ayoSrc = document.getElementById('eAyoSrc').value;
+                    if(!ayoSrc) return alert("Harap pilih Menggunakan Ayo SRC!");
+                }
+            } else if (kat === 'Venue Branding') {
+                brand = document.getElementById('eBrand').value;
+                if(!brand) return alert("Harap pilih Brand!");
+            }
+
+            const btn = event.target; 
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Menyimpan...";
+            
+            const payload = {
+                outlet_id: outletId, nama_outlet: nama, alamat: alamat,
+                zona: zona, sektor: sektor,
+                kategori_branding: kat, jenis_outlet: jenisOutlet, pabrikan: pabrikan,
+                jenis_branding: jenisBranding, brand: brand, ayo_src: ayoSrc
+            };
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}?id=eq.${selectedOutletData.id}`, { method: 'PATCH', headers: HEADERS, body: JSON.stringify(payload) });
+                if(res.ok) {
+                    alert('Data NEW Outlet berhasil diperbarui!');
+                    backToDashboard(); loadData();
+                } else { alert('Gagal mengupdate data.'); }
+            } catch (e) { console.error(e); }
+            btn.innerHTML = originalText;
+        }
+
         // === FUNGSI DELETE OUTLET BARU ===
         async function deleteNewOutlet() {
             if(!confirm("Yakin ingin menghapus outlet ini? Data yang dihapus tidak dapat dikembalikan.")) return;
-            const btn = document.getElementById('btnDeleteNew');
+            const btn = event.target;
             btn.innerHTML = "Menghapus...";
             try {
                 const res = await fetch(`${SUPABASE_URL}?id=eq.${selectedOutletData.id}`, { method: 'DELETE', headers: HEADERS });
@@ -687,28 +975,28 @@
                     alert("Gagal menghapus outlet.");
                 }
             } catch(e) { console.error(e); alert("Terjadi kesalahan jaringan."); }
-            btn.innerHTML = "HAPUS OUTLET INI (NEW)";
+            btn.innerHTML = "HAPUS NEW OUTLET INI ?";
         }
 
-        // === FUNGSI VALIDASI ===
+        // === FUNGSI VALIDASI REGULER (BUKAN NEW) ===
         function showValidasi(item) {
+            if (item.is_new) {
+                showEditNewForm(item);
+                return; // Berhenti di sini jika outletnya adalah NEW
+            }
+
             selectedOutletData = item;
             selectedOutletId = item.outlet_id;
             
             document.getElementById('mainDashboard').classList.add('hidden');
             document.getElementById('validasiForm').classList.remove('hidden');
             
+            // 1. Pastikan semua radio button dalam keadaan netral/tidak dicentang
             const radios = document.querySelectorAll('input[name="valDataSesuai"]');
             radios.forEach(r => r.checked = false);
             
             document.getElementById('valEditArea').classList.add('hidden');
             document.getElementById('btnCompleteVal').classList.add('hidden');
-
-            if(item.is_new) {
-                document.getElementById('btnDeleteNew').classList.remove('hidden');
-            } else {
-                document.getElementById('btnDeleteNew').classList.add('hidden');
-            }
 
             document.getElementById('infoOutlet').innerHTML = `
                 <div><strong>Kategori Branding:</strong> <span style="color:#d32f2f;">${item.kategori_branding || '-'}</span></div>
@@ -723,6 +1011,23 @@
                 ${item.kategori_branding === 'Venue Branding' ? `<div><strong>Brand:</strong> <span style="color:#e65100; font-weight:bold;">${item.brand || '-'}</span></div>` : ''}
                 ${item.kategori_branding === 'Retail Branding' && item.pabrikan === 'PMI' ? `<div><strong>Menggunakan Ayo SRC?:</strong> ${item.ayo_src || '-'}</div>` : ''}
             `;
+
+            // 2. Hapus referensi tanda centang (✔️) dari outlet yang sebelumnya dibuka
+            document.querySelectorAll('.prev-answer-mark').forEach(el => el.remove());
+            
+            // 3. Tambahkan teks & simbol ✔️ di sebelah label tanpa mencentang radio button-nya
+            if (item.kontrak_aktif) {
+                const targetRadio = document.querySelector(`input[name="valDataSesuai"][value="${item.kontrak_aktif}"]`);
+                if (targetRadio) {
+                    const parentLabel = targetRadio.closest('.radio-label');
+                    if (parentLabel) {
+                        const markSpan = document.createElement('span');
+                        markSpan.className = 'prev-answer-mark';
+                        markSpan.innerHTML = '<span style="color: #388e3c; font-weight: bold; font-size: 0.85rem; margin-left: 8px;">✔️ (Jawaban sebelumnya)</span>';
+                        parentLabel.appendChild(markSpan);
+                    }
+                }
+            }
         }
 
         function toggleValEdit() {
@@ -831,17 +1136,11 @@
 
         function backToDashboard() {
             document.getElementById('addForm').classList.add('hidden');
+            document.getElementById('editNewForm').classList.add('hidden');
             document.getElementById('validasiForm').classList.add('hidden');
             document.getElementById('mainDashboard').classList.remove('hidden');
         }
 
-        // === EKSEKUSI LANGSUNG ===
-        try {
-            initHome();
-        } catch (error) {
-            console.error("Gagal meload menu awal:", error);
-            alert("Terjadi kesalahan saat memuat menu Area. Coba muat ulang halaman.");
-        }
     </script>
 </body>
 </html>
